@@ -8,9 +8,9 @@ The project began as an exploratory Wolfram Community / Wolfram Summer School id
 
 Given a graph \(G\), a center vertex \(p\), and a graph-distance radius \(r_g\), define the shell
 
-\[
+$
 S_{r_g}(p)=\{q\in G:d(p,q)=r_g\}.
-\]
+$
 
 For each shell vertex \(q\), count the number of shortest paths from \(p\) to \(q\):
 
