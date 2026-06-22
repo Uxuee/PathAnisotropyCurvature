@@ -20,7 +20,8 @@ $$
 
 The ball contains all vertices within (r_g) graph steps of (p). The shell is only the boundary layer: the vertices exactly (r_g) graph steps away.
 
-![Graph shell and ball](results/figures/shell_and_ball.png)
+![Graph shell](results/figures/shell.png)
+![Graph ball](results/figures/ball.png)
 
 For each shell vertex (q), count the number of shortest paths from (p) to (q):
 
