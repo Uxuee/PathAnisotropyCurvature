@@ -33,15 +33,7 @@ The estimator measures how uneven these shortest-path counts are across the shel
 
 The current main estimator is the logarithmic cubic-mean-deviation version:
 
-$$
-C_{\log}(p,r_g)
-===============
-
-\mathrm{CMD}*{q\in S*{r_g}(p)}
-\left(
-\log(N_{\mathrm{geo}}(p,q))
-\right).
-$$
+$$ C_{\log}(p,r_g) = \mathrm{CMD}_{q\in S_{r_g}(p)}\left(\log(N_{\mathrm{geo}}(p,q))\right). $$
 
 This should be understood as a **curvature-sensitive diagnostic**, not yet as a rigorously derived discrete curvature invariant.
 
