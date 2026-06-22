@@ -6,30 +6,32 @@ The project began as an exploratory Wolfram Community / Wolfram Summer School id
 
 ## Core idea
 
-Given a graph (G), a center vertex (p), and a graph-distance radius (r_g), define the graph-distance ball
+Given a graph $G$, a center vertex $p$, and a graph-distance radius $r_g$, define the graph-distance ball
 
 $$
-B_{r_g}(p)={q\in G:d(p,q)\leq r_g},
+B_{r_g}(p) = \{ q \in G \mid d(p,q) \le r_g \},
 $$
 
 and the graph-distance shell
 
 $$
-S_{r_g}(p)={q\in G:d(p,q)=r_g}.
+S_{r_g}(p) = \{ q \in G \mid d(p,q) = r_g \}.
 $$
 
-The ball contains all vertices within (r_g) graph steps of (p). The shell is only the boundary layer: the vertices exactly (r_g) graph steps away.
+The ball contains all vertices within $r_g$ graph steps of $p$. The shell is only the boundary layer: the vertices exactly $r_g$ graph steps away.
 
 ![Graph shell](results/figures/shell.png)
 ![Graph ball](results/figures/ball.png)
 
-For each shell vertex (q), count the number of shortest paths from (p) to (q):
+For each shell vertex $q$, count the number of shortest paths from $p$ to $q$:
 
 $$
-N_{\mathrm{geo}}(p,q).
+N_{\mathrm{geo}}(p,q)
 $$
 
-The estimator measures how uneven these shortest-path counts are across the shell. The working hypothesis is that curvature leaves a statistical signature in the local geodesic/path structure of a[...]
+(or more explicitly, $N_{\mathrm{geo}}(p,q)$ denotes the number of distinct shortest paths from $p$ to $q$).
+
+The estimator measures how uneven these shortest-path counts are across the shell. The working hypothesis is that curvature leaves a statistical signature in the local geodesic/path structure of a graph.
 
 The current main estimator is the logarithmic cubic-mean-deviation version:
 
@@ -48,7 +50,7 @@ The repository includes simple benchmark graph discretizations, including a flat
 The main benchmark is the Flamm / Schwarzschild case. The continuum comparison target is the Schwarzschild Kretschmann scalar
 
 $$
-K_{\mathrm{Schw}}=\frac{48M^2}{r^6}.
+K_{\mathrm{Schw}} = \frac{48 M^2}{r^6}.
 $$
 
 The repository tests whether the graph estimator correlates with this radial curvature profile.
@@ -70,7 +72,7 @@ The signal strengthens and becomes less seed-dependent as graph resolution incre
 
 ![Mean Spearman vs N](results/figures/mean_spearman_vs_N.png)
 
-The standard deviation across random seeds decreases as (N) increases, suggesting improved stability under graph refinement.
+The standard deviation across random seeds decreases as $N$ increases, suggesting improved stability under graph refinement.
 
 ![Std Spearman vs N](results/figures/std_spearman_vs_N.png)
 
@@ -79,18 +81,18 @@ The standard deviation across random seeds decreases as (N) increases, suggestin
 The raw vertex-level comparison is noisy because the estimator is local and the graph is randomly sprinkled. Since the Schwarzschild Kretschmann scalar depends only on radial coordinate,
 
 $$
-K_{\mathrm{Schw}}=\frac{48M^2}{r^6},
+K_{\mathrm{Schw}} = \frac{48 M^2}{r^6},
 $$
 
 a more physically meaningful comparison is obtained by binning vertices by radial coordinate and averaging the estimator inside each radial bin.
 
-For \(N=500\), graph radius \(r_g=3\), and 12 radial bins, the binned logarithmic path-anisotropy estimator shows a strong relation with the Schwarzschild curvature profile. In the current run,
+For $N=500$, graph radius $r_g = 3$, and 12 radial bins, the binned logarithmic path-anisotropy estimator shows a strong relation with the Schwarzschild curvature profile. In the current run,
 
 $$
 \mathrm{Corr}(\log K_{\mathrm{Schw}}, C_{\log}) \approx 0.912,
 $$
 
-and the Spearman rank correlation with \(K_{\mathrm{Schw}}\) is approximately
+and the Spearman rank correlation with $K_{\mathrm{Schw}}$ is approximately
 
 $$
 \rho_{\mathrm{Spearman}} \approx 0.874.
@@ -103,6 +105,7 @@ $$
 ### Binned estimator vs radial coordinate
 
 ![Binned estimator vs radial coordinate](results/figures/binned_estimator_vs_r.png)
+
 ## Repository structure
 
 ```text
@@ -161,7 +164,7 @@ Correlation[
 
 ## Research status
 
-This is an exploratory research repository. The current evidence suggests that path anisotropy tracks the **ordering** of curvature better than the raw scalar magnitude. The main working claim is:
+This is an exploratory research repository. The current evidence suggests that path anisotropy tracks the **ordering** of curvature better than the raw scalar magnitude. The main working claim is [...]
 
 > The logarithmic path-anisotropy estimator provides a local graph observable whose rank correlation with the Schwarzschild Kretschmann profile improves under graph refinement.
 
