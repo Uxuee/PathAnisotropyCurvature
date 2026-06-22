@@ -2,31 +2,31 @@
 
 This repository develops a graph-based curvature diagnostic inspired by geodesic shells, shortest-path statistics, and continuum curvature invariants such as the Schwarzschild Kretschmann scalar.
 
-The project began as an exploratory Wolfram Community / Wolfram Summer School idea about a possible Kretschmann-like scalar for hypergraphs. This repository reformulates the idea more cautiously as a **path-anisotropy curvature estimator** and tests it on benchmark geometries.
+The project began as an exploratory Wolfram Community / Wolfram Summer School idea about a possible Kretschmann-like scalar for hypergraphs. This repository reformulates the idea more cautiously as[...]
 
 ## Core idea
 
-Given a graph \(G\), a center vertex \(p\), and a graph-distance radius \(r_g\), define the shell
+Given a graph $G$, a center vertex $p$, and a graph-distance radius $r_g$, define the shell
 
-$
+$$
 S_{r_g}(p)=\{q\in G:d(p,q)=r_g\}.
-$
+$$
 
-For each shell vertex \(q\), count the number of shortest paths from \(p\) to \(q\):
+For each shell vertex $q$, count the number of shortest paths from $p$ to $q$:
 
-\[
+$$
 N_{\mathrm{geo}}(p,q).
-\]
+$$
 
-The estimator measures how uneven these shortest-path counts are across the shell. The working hypothesis is that curvature leaves a statistical signature in the local geodesic/path structure of a discrete geometry.
+The estimator measures how uneven these shortest-path counts are across the shell. The working hypothesis is that curvature leaves a statistical signature in the local geodesic/path structure of a[...]
 
 The current main estimator is the logarithmic cubic-mean-deviation version:
 
-\[
+$$
 C_{\log}(p,r_g)
 =
 \operatorname{CMD}\left(\log(N_{\mathrm{geo}}(p,q))\right)_{q\in S_{r_g}(p)}.
-\]
+$$
 
 This should be understood as a **curvature-sensitive diagnostic**, not yet as a rigorously derived discrete curvature invariant.
 
@@ -34,9 +34,9 @@ This should be understood as a **curvature-sensitive diagnostic**, not yet as a 
 
 The main benchmark is a Flamm paraboloid / Schwarzschild spatial-slice-inspired graph. The continuum comparison target is the Schwarzschild Kretschmann scalar
 
-\[
+$$
 K_{\mathrm{Schw}}=\frac{48M^2}{r^6}.
-\]
+$$
 
 The repository tests whether the graph estimator correlates with the radial curvature profile.
 
@@ -55,7 +55,7 @@ Current exploratory Mathematica runs show:
 
 The signal strengthens and becomes less seed-dependent as graph resolution increases.
 
-A radial-binning test for \(N=500\), graph radius \(r_g=3\), shows a strong monotonic relation between binned mean path anisotropy and the Schwarzschild curvature profile. In the current run, the binned estimator correlates strongly with \(\log K_{\mathrm{Schw}}\) and decreases with radial coordinate.
+A radial-binning test for $N=500$, graph radius $r_g=3$, shows a strong monotonic relation between binned mean path anisotropy and the Schwarzschild curvature profile. In the current run, the [...]
 
 ## Repository structure
 
@@ -114,7 +114,7 @@ Correlation[
 
 ## Research status
 
-This is an exploratory research repository. The current evidence suggests that path anisotropy tracks the **ordering** of curvature better than the raw scalar magnitude. The main working claim is therefore:
+This is an exploratory research repository. The current evidence suggests that path anisotropy tracks the **ordering** of curvature better than the raw scalar magnitude. The main working claim is[...]
 
 > The logarithmic path-anisotropy estimator provides a local graph observable whose rank correlation with the Schwarzschild Kretschmann profile improves under graph refinement.
 
