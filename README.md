@@ -84,16 +84,25 @@ $$
 
 a more physically meaningful comparison is obtained by binning vertices by radial coordinate and averaging the estimator inside each radial bin.
 
-For (N=500) and graph radius (r_g=3), the binned estimator decreases with radial distance, matching the expected decrease of the Schwarzschild curvature profile.
+For \(N=500\), graph radius \(r_g=3\), and 12 radial bins, the binned logarithmic path-anisotropy estimator shows a strong relation with the Schwarzschild curvature profile. In the current run,
 
-![Binned estimator vs radial coordinate](results/figures/binned_estimator_vs_r.png)
+$$
+\mathrm{Corr}(\log K_{\mathrm{Schw}}, C_{\log}) \approx 0.912,
+$$
 
-Because (K_{\mathrm{Schw}}) changes by orders of magnitude, the relation is clearer when the estimator is compared with (\log K_{\mathrm{Schw}}).
+and the Spearman rank correlation with \(K_{\mathrm{Schw}}\) is approximately
+
+$$
+\rho_{\mathrm{Spearman}} \approx 0.874.
+$$
+
+### Binned estimator vs log curvature
 
 ![Binned estimator vs log curvature](results/figures/binned_estimator_vs_logK.png)
 
-The current binned runs suggest that the path-anisotropy estimator tracks the curvature profile more clearly after radial averaging than in the raw vertex-by-vertex comparison.
+### Binned estimator vs radial coordinate
 
+![Binned estimator vs radial coordinate](results/figures/binned_estimator_vs_r.png)
 ## Repository structure
 
 ```text
