@@ -169,14 +169,6 @@ The estimator should not yet be interpreted as a discrete Kretschmann scalar. A 
 * Compare with Ollivier-Ricci, Forman-Ricci, causal-set scalar curvature, and Wolfram-model curvature constructions.
 * Extend from graph benchmarks to hypergraph evolution data.
 
-## Possible paper direction
-
-Possible titles:
-
-* **Path Anisotropy as a Curvature Diagnostic in Discrete Geometries**
-* **A Geodesic-Shell Curvature Estimator for Graph and Hypergraph Discretizations**
-* **Shortest-Path Anisotropy and Curvature Profiles in Discrete Spacetime Benchmarks**
-
 ## Author
 
 Ariadna Uxue Palomino Ylla
