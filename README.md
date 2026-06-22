@@ -2,7 +2,7 @@
 
 This repository develops a graph-based curvature diagnostic inspired by geodesic shells, shortest-path statistics, and continuum curvature invariants such as the Schwarzschild Kretschmann scalar.
 
-The project began as an exploratory Wolfram Community / Wolfram Summer School idea about a possible Kretschmann-like scalar for hypergraphs. This repository reformulates the idea more cautiously as a **path-anisotropy curvature estimator** and tests it on benchmark graph discretizations of simple geometries.
+The project began as an exploratory Wolfram Community / Wolfram Summer School idea about a possible Kretschmann-like scalar for hypergraphs. This repository reformulates the idea more cautiously as [...]
 
 ## Core idea
 
@@ -29,11 +29,13 @@ $$
 N_{\mathrm{geo}}(p,q).
 $$
 
-The estimator measures how uneven these shortest-path counts are across the shell. The working hypothesis is that curvature leaves a statistical signature in the local geodesic/path structure of a discrete geometry.
+The estimator measures how uneven these shortest-path counts are across the shell. The working hypothesis is that curvature leaves a statistical signature in the local geodesic/path structure of a[...]
 
 The current main estimator is the logarithmic cubic-mean-deviation version:
 
-$$ C_{\log}(p,r_g) = \mathrm{CMD}_{q\in S_{r_g}(p)}\left(\log(N_{\mathrm{geo}}(p,q))\right). $$
+$$
+C_{\log}(p, r_g) = \operatorname{CMD}_{\,q \in S_{r_g}(p)}\!\big( \log N_{\mathrm{geo}}(p,q) \big).
+$$
 
 This should be understood as a **curvature-sensitive diagnostic**, not yet as a rigorously derived discrete curvature invariant.
 
