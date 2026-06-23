@@ -197,7 +197,7 @@ whereas the Flamm / Schwarzschild benchmark gives
 
 Thus, the strong negative radial trend observed in the Flamm benchmark is not reproduced by a flat graph with the same radial sampling. This supports the interpretation that the Flamm signal is associated with the curved embedding / Schwarzschild radial curvature profile, rather than only with the distribution of sampled radii.
 
-![Matched flat vs Flamm radial path anisotropy](results/figures/matched_flat_vs_flamm_radial_logcmd_N1000.png)
+![Matched flat vs Flamm radial path anisotropy](results/figures/matched_flat_vs_flamm_radial_logcmd_N1000.png?v=2)
 
 
 ## Repository structure
