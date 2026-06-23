@@ -144,6 +144,33 @@ This suggests that radial binning reveals a clearer curvature profile than the r
 
 ![Binned estimator vs radial coordinate](results/figures/binned_estimator_vs_r.png)
 
+## Flat-space control
+
+A basic flat-space control was added to check whether the estimator simply produces a different global distribution in curved and flat graphs. The global distributions of `LogCMD` overlap strongly: the effect size between the flat and Flamm distributions is very small,
+
+[
+d_{\mathrm{Cohen}} \approx -0.027.
+]
+
+This indicates that the relevant signal is not a simple global shift in the estimator.
+
+The more meaningful comparison is radial. In the flat benchmark, the radial correlation between binned mean `LogCMD` and radial coordinate is close to zero,
+
+[
+\mathrm{Corr}(r,C_{\log})_{\mathrm{Flat}} \approx 0.046,
+]
+
+whereas in the Flamm / Schwarzschild benchmark the radial correlation is strongly negative,
+
+[
+\mathrm{Corr}(r,C_{\log})_{\mathrm{Flamm}} \approx -0.957.
+]
+
+This supports the interpretation that the estimator is sensitive to the spatial organization of the curvature profile rather than merely separating flat and curved graphs by their average value.
+
+![Flat vs Flamm radial path anisotropy](results/figures/flat_vs_flamm_radial_logcmd.png)
+
+
 ## Repository structure
 
 ```text
