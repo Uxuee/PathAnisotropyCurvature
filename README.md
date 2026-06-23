@@ -289,9 +289,9 @@ A graph-based version with nearest-neighbor edges is also included:
 
 ![Paraboloid graph colored by curvature](results/figures/paraboloid_graph_colored_by_curvature.png)
 
-A mesh-style visualization is provided for presentation purposes:
+%A mesh-style visualization is provided for presentation purposes:
 
-![Paraboloid mesh colored by curvature](results/figures/paraboloid_mesh_colored_by_curvature.png)
+%![Paraboloid mesh colored by curvature](results/figures/paraboloid_mesh_colored_by_curvature.png)
 
 ### Paraboloid estimator test
 
