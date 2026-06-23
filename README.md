@@ -2,13 +2,13 @@
 
 This repository develops a graph-based curvature diagnostic inspired by geodesic shells, shortest-path statistics, and continuum curvature invariants such as the Schwarzschild Kretschmann scalar.
 
-The project began as an exploratory Wolfram Community / Wolfram Summer School idea about a possible Kretschmann-like scalar for hypergraphs. This repository reformulates the idea more cautiously as a [...]
+The project began as an exploratory Wolfram Community / Wolfram Summer School idea about a possible Kretschmann-like scalar for hypergraphs. This repository reformulates the idea more cautiously as a discrete curvature diagnostic based on shortest-path anisotropy.
 
 ## TL;DR
 
 This project tests whether local shortest-path anisotropy can act as a curvature-sensitive observable in graph discretizations of continuum geometries.
 
-The strongest current result is obtained in a Flamm / Schwarzschild benchmark. For graph radius $r_g = 3$, the rank correlation between the logarithmic path-anisotropy estimator and the Schwarzsch[...]
+The strongest current result is obtained in a Flamm / Schwarzschild benchmark. For graph radius $r_g = 3$, the rank correlation between the logarithmic path-anisotropy estimator and the Schwarzschild Kretschmann scalar improves with graph refinement.
 
 |    N | Mean Spearman | Std. Spearman |
 | ---: | ------------: | ------------: |
@@ -52,7 +52,7 @@ $$
 
 or, more explicitly, $N_{\mathrm{geo}}(p,q)$ denotes the number of distinct shortest paths from $p$ to $q$.
 
-The estimator measures how uneven these shortest-path counts are across the shell. The working hypothesis is that curvature leaves a statistical signature in the local geodesic/path structure of a[...]
+The estimator measures how uneven these shortest-path counts are across the shell. The working hypothesis is that curvature leaves a statistical signature in the local geodesic/path structure of a discretized manifold.
 
 The current main estimator is the logarithmic cubic-mean-deviation version:
 
@@ -142,7 +142,7 @@ This suggests that radial binning reveals a clearer curvature profile than the r
 
 ## Flat-space control
 
-A basic flat-space control was added to check whether the estimator simply produces a different global distribution in curved and flat graphs. The global distributions of `LogCMD` overlap strongly: the Cohen's $d$ effect size is negligible,
+A basic flat-space control was added to check whether the estimator simply produces a different global distribution in curved and flat graphs. The global distributions of `LogCMD` overlap strongly: the Cohen $d$ effect size is
 
 $$
 d_{\mathrm{Cohen}} \approx -0.027.
@@ -169,33 +169,33 @@ This supports the interpretation that the estimator is sensitive to the spatial 
 
 ## Matched-flat control
 
-A stronger null test was performed using a matched-flat control. This graph uses the same radial and angular sampling as the Flamm / Schwarzschild benchmark, but removes the embedded height profile. In other words, the Flamm points
+A stronger null test was performed using a matched-flat control. This graph uses the same radial and angular sampling as the Flamm / Schwarzschild benchmark, but removes the embedded height profile. In the Flamm benchmark, vertices are placed at
 
-[
+$$
 (r\cos\theta, r\sin\theta, z(r))
-]
+$$
 
 are replaced by matched-flat points
 
-[
+$$
 (r\cos\theta, r\sin\theta).
-]
+$$
 
 This keeps the radial sampling fixed while removing the Flamm curvature.
 
-For (N=1000), graph radius (r_g=3), and 12 radial bins, the matched-flat control gives
+For $N=1000$, graph radius $r_g=3$, and 12 radial bins, the matched-flat control gives
 
-[
+$$
 \mathrm{Corr}(r,C_{\log})_{\mathrm{MatchedFlat}} \approx 0.375,
-]
+$$
 
 whereas the Flamm / Schwarzschild benchmark gives
 
-[
+$$
 \mathrm{Corr}(r,C_{\log})_{\mathrm{Flamm}} \approx -0.985.
-]
+$$
 
-Thus, the strong negative radial trend observed in the Flamm benchmark is not reproduced by a flat graph with the same radial sampling. This supports the interpretation that the Flamm signal is associated with the curved embedding / Schwarzschild radial curvature profile, rather than only with the distribution of sampled radii.
+Thus, the strong negative radial trend observed in the Flamm benchmark is not reproduced by a flat graph with the same radial sampling. This supports the interpretation that the Flamm signal is associated with the embedded curvature, not with the radial sampling alone.
 
 ![Matched flat vs Flamm radial path anisotropy](results/figures/matched_flat_vs_flamm_radial_logcmd_N1000.png?v=2)
 
@@ -361,7 +361,7 @@ This project grew out of an earlier Wolfram Community / Wolfram Summer School ex
 * [Original Wolfram Community post: *Kretschmann scalar for hypergraphs*](https://community.wolfram.com/groups/-/m/t/2312929)
 * [Notebook Archive version](https://www.notebookarchive.org/kretschmann-scalar-for-hypergraphs--2021-07-61wg0en/)
 
-The original project asked whether a curvature scalar analogous to the Kretschmann scalar could be defined for hypergraph-based discrete geometries. The present repository reformulates that idea [...]
+The original project asked whether a curvature scalar analogous to the Kretschmann scalar could be defined for hypergraph-based discrete geometries. The present repository reformulates that idea more conservatively as a shortest-path-based curvature diagnostic.
 
 ## Suggested citation
 
