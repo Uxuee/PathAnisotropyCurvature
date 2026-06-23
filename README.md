@@ -255,6 +255,85 @@ A version with error bars is also provided:
 
 ![k-sensitivity of matched-flat control with errors](results/figures/k_sensitivity_matched_flat_flamm_N1000_errors.png)
 
+## Additional benchmark: paraboloid surface
+
+As an additional test case, the repository includes a paraboloid benchmark. This surface is useful because it has a simple radial curvature profile and can be visualized clearly.
+
+The paraboloid is defined by
+
+$$
+z = a(x^2+y^2),
+$$
+
+or equivalently, in radial coordinates,
+
+$$
+z = ar^2.
+$$
+
+Its Gaussian curvature is
+
+$$
+K_G(r) = \frac{4a^2}{(1+4a^2r^2)^2}.
+$$
+
+Thus, the curvature is largest near the center and decreases with radial coordinate. This makes the paraboloid a useful secondary benchmark for testing whether the path-anisotropy estimator responds to smooth radial curvature gradients.
+
+### Curvature-colored paraboloid
+
+The following visualization colors the sampled graph vertices according to the logarithm of the Gaussian curvature.
+
+![Paraboloid colored by Gaussian curvature](results/figures/paraboloid_colored_by_curvature.png)
+
+A graph-based version with nearest-neighbor edges is also included:
+
+![Paraboloid graph colored by curvature](results/figures/paraboloid_graph_colored_by_curvature.png)
+
+A mesh-style visualization is provided for presentation purposes:
+
+![Paraboloid mesh colored by curvature](results/figures/paraboloid_mesh_colored_by_curvature.png)
+
+### Paraboloid estimator test
+
+For the paraboloid benchmark, the same local graph estimator is computed:
+
+$$
+C_{\log}(p, r_g) = \mathrm{CMD}*{q \in S*{r_g}(p)} \big( \log N_{\mathrm{geo}}(p,q) \big).
+$$
+
+The binned estimator is then compared with the analytic Gaussian curvature profile.
+
+![Paraboloid estimator vs log curvature](results/figures/paraboloid_estimator_vs_logK.png)
+
+![Paraboloid estimator vs radius](results/figures/paraboloid_estimator_vs_r.png)
+
+A matched-flat control can also be constructed by keeping the same radial and angular sampling while removing the height profile:
+
+$$
+(r\cos\theta, r\sin\theta, ar^2)
+\quad \longrightarrow \quad
+(r\cos\theta, r\sin\theta).
+$$
+
+This checks whether any observed radial trend is caused by curvature rather than by the radial sampling distribution alone.
+
+![Matched flat vs paraboloid radial path anisotropy](results/figures/matched_flat_vs_paraboloid_radial_logcmd_N1000.png)
+
+### Curvature-strength scan
+
+The current paraboloid experiment scans different values of the curvature parameter $a$:
+
+$$
+a = 0.15,\ 0.25,\ 0.35,\ 0.5,\ 0.7.
+$$
+
+The purpose is to test whether the estimator separates the paraboloid from its matched-flat control as the curvature strength increases.
+
+![Paraboloid curvature-strength scan](results/figures/paraboloid_curvature_strength_scan_N1000.png)
+
+This benchmark is currently exploratory. If the paraboloid and matched-flat control behave similarly, the result will be interpreted as a limitation of the estimator under this graph construction rather than as a failed result. The main validated benchmark remains the Flamm / Schwarzschild case.
+
+
 ## Repository structure
 
 ```text
