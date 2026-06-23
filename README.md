@@ -4,6 +4,8 @@ This repository develops a graph-based curvature diagnostic inspired by geodesic
 
 The project began as an exploratory Wolfram Community / Wolfram Summer School idea about a possible Kretschmann-like scalar for hypergraphs. This repository reformulates the idea more cautiously as a discrete curvature diagnostic based on shortest-path anisotropy.
 
+The current goal is not to claim that the estimator is already a discrete Kretschmann scalar. Instead, the goal is to test whether local shortest-path anisotropy contains curvature-like information in graph discretizations of known continuum geometries.
+
 ## TL;DR
 
 This project tests whether local shortest-path anisotropy can act as a curvature-sensitive observable in graph discretizations of continuum geometries.
@@ -22,20 +24,34 @@ $$
 \mathrm{Corr}(\log K_{\mathrm{Schw}}, C_{\log}) \approx 0.912.
 $$
 
-The current interpretation is that $C_{\log}$ tracks the **curvature ordering/profile** rather than directly reproducing the Kretschmann scalar.
+A matched-flat control was also added. This control uses the same radial sampling as the Flamm graph but removes the Flamm height profile. Across five random seeds at $N=1000$, graph radius $r_g=3$, and $k=16$, the matched-flat control gives
+
+$$
+\mathrm{Corr}(r,C_{\log})_{\mathrm{MatchedFlat}} = 0.180 \pm 0.315,
+$$
+
+whereas the Flamm / Schwarzschild benchmark gives
+
+$$
+\mathrm{Corr}(r,C_{\log})_{\mathrm{Flamm}} = -0.960 \pm 0.015.
+$$
+
+The result also survives changes in the $k$-nearest-neighbor graph construction. Across $k=12,14,16,18,20$, the Flamm / Schwarzschild benchmark remains strongly negatively correlated with radial coordinate, while the matched-flat control remains weak or variable.
+
+The current interpretation is that $C_{\log}$ tracks the **spatial organization of the curvature profile** rather than directly reproducing the Kretschmann scalar point by point.
 
 ## Core idea
 
 Given a graph $G$, a center vertex $p$, and a graph-distance radius $r_g$, define the graph-distance ball
 
 $$
-B_{r_g}(p) = \{ q \in G \mid d(p,q) \le r_g \},
+B_{r_g}(p) = { q \in G \mid d(p,q) \le r_g },
 $$
 
 and the graph-distance shell
 
 $$
-S_{r_g}(p) = \{ q \in G \mid d(p,q) = r_g \}.
+S_{r_g}(p) = { q \in G \mid d(p,q) = r_g }.
 $$
 
 The ball contains all vertices within $r_g$ graph steps of $p$. The shell is only the boundary layer: the vertices exactly $r_g$ graph steps away.
@@ -57,7 +73,7 @@ The estimator measures how uneven these shortest-path counts are across the shel
 The current main estimator is the logarithmic cubic-mean-deviation version:
 
 $$
-C_{\log}(p, r_g) = \mathrm{CMD}_{q \in S_{r_g}(p)} \big( \log N_{\mathrm{geo}}(p,q) \big).
+C_{\log}(p, r_g) = \mathrm{CMD}*{q \in S*{r_g}(p)} \big( \log N_{\mathrm{geo}}(p,q) \big).
 $$
 
 This should be understood as a **curvature-sensitive diagnostic**, not yet as a rigorously derived discrete curvature invariant.
@@ -69,7 +85,7 @@ For each center vertex $p$:
 1. Build the graph-distance shell $S_{r_g}(p)$.
 2. Count the number of shortest paths $N_{\mathrm{geo}}(p,q)$ from $p$ to each shell vertex $q$.
 3. Compute the variation of $\log N_{\mathrm{geo}}(p,q)$ over the shell.
-4. Compare the resulting local estimator $C_{\log}(p,r_g)$ with a continuum curvature target.
+4. Compare the resulting local estimator $C_{\log}(p,r_g)$ with a continuum curvature target or with a control geometry.
 
 In Mathematica, the main estimator is stored as the `LogCMD` column.
 
@@ -148,7 +164,7 @@ $$
 d_{\mathrm{Cohen}} \approx -0.027.
 $$
 
-This indicates that the relevant signal is not a simple global shift in the estimator.
+This indicates that the relevant signal is not a simple global shift in the estimator. In other words, the estimator does not merely say that curved graphs have larger or smaller average `LogCMD` values.
 
 The more meaningful comparison is radial. In the flat benchmark, the radial correlation between binned mean `LogCMD` and radial coordinate is close to zero,
 
@@ -166,6 +182,7 @@ This supports the interpretation that the estimator is sensitive to the spatial 
 
 ![Flat vs Flamm radial path anisotropy](results/figures/flat_vs_flamm_radial_logcmd.png)
 
+However, finite flat-disk controls can still contain boundary and graph-construction effects. For this reason, the matched-flat control below is the stronger null test.
 
 ## Matched-flat control
 
@@ -175,7 +192,7 @@ $$
 (r\cos\theta, r\sin\theta, z(r))
 $$
 
-are replaced by matched-flat points
+whereas in the matched-flat control they are placed at
 
 $$
 (r\cos\theta, r\sin\theta).
@@ -195,10 +212,48 @@ $$
 \mathrm{Corr}(r,C_{\log})_{\mathrm{Flamm}} \approx -0.985.
 $$
 
-Thus, the strong negative radial trend observed in the Flamm benchmark is not reproduced by a flat graph with the same radial sampling. This supports the interpretation that the Flamm signal is associated with the embedded curvature, not with the radial sampling alone.
+Thus, the strong negative radial trend observed in the Flamm benchmark is not reproduced by a flat graph with the same radial sampling. This supports the interpretation that the Flamm signal is associated with the curved embedding / Schwarzschild radial curvature profile, not with the radial sampling alone.
 
 ![Matched flat vs Flamm radial path anisotropy](results/figures/matched_flat_vs_flamm_radial_logcmd_N1000.png?v=2)
 
+## Matched-flat control across seeds
+
+The matched-flat control was repeated across five random seeds at $N=1000$, graph radius $r_g=3$, $k=16$, and 12 radial bins.
+
+| Case         | Mean Corr$(r,C_{\log})$ | Std. Corr$(r,C_{\log})$ |    Min |    Max |
+| ------------ | ----------------------: | ----------------------: | -----: | -----: |
+| Matched flat |                   0.180 |                   0.315 | -0.200 |  0.556 |
+| Flamm        |                  -0.960 |                   0.015 | -0.983 | -0.947 |
+
+The Flamm / Schwarzschild benchmark shows a stable strong negative radial correlation across seeds, while the matched-flat control is variable and not consistently negative. This is the current strongest control result.
+
+![Matched-flat control across seeds](results/figures/matched_flat_flamm_seed_scatter_N1000.png)
+
+The summary figure shows the mean and standard deviation over seeds:
+
+![Matched-flat control summary](results/figures/matched_flat_flamm_summary_N1000.png)
+
+## k-sensitivity
+
+The matched-flat control was also tested across several $k$-nearest-neighbor graph constructions. This checks whether the Flamm signal only appears for a special choice of graph connectivity.
+
+For $N=1000$, graph radius $r_g=3$, 12 radial bins, and three random seeds per value of $k$, the mean radial correlations are:
+
+| $k$ | Matched-flat mean | Matched-flat std | Flamm mean | Flamm std |
+| --: | ----------------: | ---------------: | ---------: | --------: |
+|  12 |             0.125 |            0.330 |     -0.942 |     0.016 |
+|  14 |             0.155 |            0.510 |     -0.961 |     0.027 |
+|  16 |             0.022 |            0.292 |     -0.960 |     0.020 |
+|  18 |             0.165 |            0.413 |     -0.965 |     0.018 |
+|  20 |             0.372 |            0.166 |     -0.962 |     0.023 |
+
+Across all tested values of $k$, the Flamm / Schwarzschild benchmark remains strongly negatively correlated with radial coordinate, while the matched-flat control remains weak or variable. This suggests that the Flamm radial signal is robust to changes in the nearest-neighbor graph construction.
+
+![k-sensitivity of matched-flat control](results/figures/k_sensitivity_matched_flat_flamm_N1000.png)
+
+A version with error bars is also provided:
+
+![k-sensitivity of matched-flat control with errors](results/figures/k_sensitivity_matched_flat_flamm_N1000_errors.png)
 
 ## Repository structure
 
@@ -318,11 +373,33 @@ Correlation[
 ]
 ```
 
+For the matched-flat control and k-sensitivity experiments, see the helper functions in `code/CurvatureEstimator.wl`.
+
+## Current validation status
+
+The project currently has the following validation layers:
+
+| Test                                              | Status  | Interpretation                                                    |
+| ------------------------------------------------- | ------- | ----------------------------------------------------------------- |
+| Estimator definition                              | Done    | Local shell-based path-anisotropy observable                      |
+| Flamm / Schwarzschild benchmark                   | Done    | Tests against $K_{\mathrm{Schw}}=48M^2/r^6$                       |
+| Multi-seed refinement                             | Done    | Rank correlation improves and seed variability decreases with $N$ |
+| Radial binning                                    | Done    | Strong relation with $\log K_{\mathrm{Schw}}$                     |
+| Flat global distribution control                  | Done    | No simple global mean shift                                       |
+| Generic flat radial control                       | Done    | Useful but affected by finite-boundary effects                    |
+| Matched-flat control                              | Done    | Stronger null test with same radial sampling                      |
+| Multi-seed matched-flat control                   | Done    | Flamm signal stable; matched-flat signal variable                 |
+| k-sensitivity                                     | Done    | Flamm signal persists across tested $k$ values                    |
+| Additional curved benchmarks                      | Planned | Sphere, hyperboloid, or hyperbolic surface                        |
+| Comparison with existing graph curvature measures | Planned | Needed for a stronger paper version                               |
+
 ## Research status
 
-This is an exploratory research repository. The current evidence suggests that path anisotropy tracks the **ordering** of curvature better than the raw scalar magnitude. The main working claim is
+This is an exploratory research repository. The current evidence suggests that path anisotropy tracks the **spatial organization** of curvature better than the raw scalar magnitude.
 
-> The logarithmic path-anisotropy estimator provides a local graph observable whose rank correlation with the Schwarzschild Kretschmann profile improves under graph refinement.
+The main working claim is
+
+> The logarithmic path-anisotropy estimator provides a local graph observable whose radial organization tracks the Schwarzschild curvature profile in Flamm / Schwarzschild graph benchmarks and is not reproduced by matched-flat controls.
 
 The estimator should not yet be interpreted as a discrete Kretschmann scalar. A safer interpretation is that it is a curvature-sensitive diagnostic based on shortest-path anisotropy.
 
@@ -335,24 +412,24 @@ In short:
 This project is exploratory. The main current limitations are:
 
 * The estimator is path-statistical, not tensorial.
+* The estimator is not derived from a discrete Riemann tensor.
 * The current benchmark is a spatial Flamm / Schwarzschild slice, not a full Lorentzian spacetime.
-* The result may depend on graph construction choices, especially the $k$-nearest-neighbor parameter.
+* The result may depend on graph construction choices, although the current Flamm signal is stable across the tested $k$-nearest-neighbor values.
 * Raw vertex-level correlations are moderate; radial binning gives a stronger signal.
-* Additional flat-space null tests are needed.
 * Additional curved benchmarks, such as spheres, hyperbolic surfaces, and causal-set-like graphs, should be tested.
 * Comparisons with existing graph curvature definitions, such as Ollivier-Ricci and Forman-Ricci curvature, remain future work.
+* The current results support a curvature-sensitive diagnostic, not a rigorous continuum-limit theorem.
 
 ## Planned next steps
 
-* Add flat-space null tests.
 * Add hyperboloid/sphere controls.
+* Repeat the matched-flat and k-sensitivity tests with more random seeds.
 * Compare graph radii and neighborhood sizes.
 * Compare k-nearest-neighbor graphs with distance-cutoff graphs.
-* Add more radial binning plots.
 * Add convergence figures with error bars.
-* Test sensitivity to the $k$-nearest-neighbor parameter.
 * Compare with Ollivier-Ricci, Forman-Ricci, causal-set scalar curvature, and Wolfram-model curvature constructions.
 * Extend from graph benchmarks to hypergraph evolution data.
+* Prepare a short arXiv-style technical note.
 
 ## Project origin
 
@@ -361,7 +438,7 @@ This project grew out of an earlier Wolfram Community / Wolfram Summer School ex
 * [Original Wolfram Community post: *Kretschmann scalar for hypergraphs*](https://community.wolfram.com/groups/-/m/t/2312929)
 * [Notebook Archive version](https://www.notebookarchive.org/kretschmann-scalar-for-hypergraphs--2021-07-61wg0en/)
 
-The original project asked whether a curvature scalar analogous to the Kretschmann scalar could be defined for hypergraph-based discrete geometries. The present repository reformulates that idea more conservatively as a shortest-path-based curvature diagnostic.
+The original project asked whether a curvature scalar analogous to the Kretschmann scalar could be defined for hypergraph-based discrete geometries. The present repository reformulates that idea more conservatively as a shortest-path-based curvature diagnostic and adds benchmark tests, seed averaging, graph refinement, radial binning, matched-flat controls, and k-sensitivity tests.
 
 ## Suggested citation
 
