@@ -167,6 +167,39 @@ This supports the interpretation that the estimator is sensitive to the spatial 
 ![Flat vs Flamm radial path anisotropy](results/figures/flat_vs_flamm_radial_logcmd.png)
 
 
+## Matched-flat control
+
+A stronger null test was performed using a matched-flat control. This graph uses the same radial and angular sampling as the Flamm / Schwarzschild benchmark, but removes the embedded height profile. In other words, the Flamm points
+
+[
+(r\cos\theta, r\sin\theta, z(r))
+]
+
+are replaced by matched-flat points
+
+[
+(r\cos\theta, r\sin\theta).
+]
+
+This keeps the radial sampling fixed while removing the Flamm curvature.
+
+For (N=1000), graph radius (r_g=3), and 12 radial bins, the matched-flat control gives
+
+[
+\mathrm{Corr}(r,C_{\log})_{\mathrm{MatchedFlat}} \approx 0.375,
+]
+
+whereas the Flamm / Schwarzschild benchmark gives
+
+[
+\mathrm{Corr}(r,C_{\log})_{\mathrm{Flamm}} \approx -0.985.
+]
+
+Thus, the strong negative radial trend observed in the Flamm benchmark is not reproduced by a flat graph with the same radial sampling. This supports the interpretation that the Flamm signal is associated with the curved embedding / Schwarzschild radial curvature profile, rather than only with the distribution of sampled radii.
+
+![Matched flat vs Flamm radial path anisotropy](results/figures/matched_flat_vs_flamm_radial_logcmd_N1000.png)
+
+
 ## Repository structure
 
 ```text
