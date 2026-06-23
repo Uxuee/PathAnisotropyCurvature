@@ -1,584 +1,839 @@
 (* ::Package:: *)
 
-(* Path Anisotropy Curvature Estimator *)
-(* Author: Ariadna Uxue Palomino Ylla *)
+(*
+  PathAnisotropyCurvature / CurvatureEstimator.wl
 
-ClearAll["Global`*"];
+  Clean core code for shortest-path anisotropy curvature diagnostics.
 
-(* ========================= *)
-(* Utilities                 *)
-(* ========================= *)
+  Main idea:
+    For each vertex p, look at the graph-distance shell S_rg(p), count the
+    number of shortest paths from p to each shell vertex q, and measure the
+    shell anisotropy of log shortest-path counts.
 
-ClearAll[rankData];
+  Main estimator:
+    LogCMD = cubic mean deviation of Log[N_geo(p,q)] over q in S_rg(p).
+
+  Notes:
+    - This file is intentionally code-only. Put exploratory notebook cells,
+      one-off plots, and failed experiments in notebooks/ or docs/ instead.
+    - The estimator is a curvature-sensitive diagnostic, not a discrete
+      Kretschmann scalar.
+*)
+
+BeginPackage["PathAnisotropyCurvature`"];
+
+rankData::usage = "rankData[x] returns average ranks, with ties assigned their mean rank.";
+spearmanCorr::usage = "spearmanCorr[x, y] computes a Spearman rank correlation with basic validity checks.";
+safeCorrelation::usage = "safeCorrelation[x, y] computes Pearson correlation after removing invalid numeric pairs.";
+cubicMeanDeviation::usage = "cubicMeanDeviation[x] computes (Mean[Abs[x-Mean[x]]^3])^(1/3).";
+safeStd::usage = "safeStd[x] returns StandardDeviation[x], or 0 for fewer than two values.";
+validRealNumberQ::usage = "validRealNumberQ[x] returns True when x is a finite real numeric value.";
+
+makeKNNGraph::usage = "makeKNNGraph[points, k] builds an unweighted k-nearest-neighbor graph from point coordinates.";
+flatDiskPoints::usage = "flatDiskPoints[n] samples n points in a flat disk or annulus.";
+hyperboloidPoints::usage = "hyperboloidPoints[n] samples n points on a simple hyperboloid-like surface.";
+flammPoints::usage = "flammPoints[n, M] samples n points on a Flamm paraboloid z = 2 Sqrt[2 M (r - 2 M)].";
+
+buildFlatDataset::usage = "buildFlatDataset[n, k] builds a flat control dataset association.";
+buildHyperboloidDataset::usage = "buildHyperboloidDataset[n, k] builds a hyperboloid benchmark dataset association.";
+buildFlammDataset::usage = "buildFlammDataset[n, M, k] builds a Flamm/Schwarzschild benchmark dataset association.";
+buildMatchedFlatFromFlamm3::usage = "buildMatchedFlatFromFlamm3[flammData, k] makes a matched-flat control by removing the Flamm height coordinate.";
+
+plotDataset2D::usage = "plotDataset2D[data, label] plots the first two coordinates of a dataset.";
+plotDataset3D::usage = "plotDataset3D[data, label] plots the first three coordinates of a dataset.";
+shellAndBallVertices::usage = "shellAndBallVertices[data, center, radius] returns center, shell, and ball vertex sets.";
+plotGeometryShell2D::usage = "plotGeometryShell2D[data, center, radius, label] colors center, ball, and shell vertices in 2D.";
+plotGeometryShell3D::usage = "plotGeometryShell3D[data, center, radius, label] colors center, ball, and shell vertices in 3D.";
+coloredGeometryPlot::usage = "coloredGeometryPlot[data, center, radius, label] chooses a 2D or 3D colored shell/ball plot automatically.";
+
+schwarzschildK::usage = "schwarzschildK[r, M] gives 48 M^2/r^6.";
+precomputeAdjacency::usage = "precomputeAdjacency[g] returns an Association vertex -> adjacency list.";
+shortestPathCountsFromAdj::usage = "shortestPathCountsFromAdj[adj, source] returns graph distances and shortest-path counts from source.";
+pathAnisotropyEstimator::usage = "pathAnisotropyEstimator[g, p, radius] evaluates shortest-path anisotropy around vertex p.";
+evaluateDataset::usage = "evaluateDataset[data, radius] evaluates the estimator for every vertex in a dataset.";
+cleanRows::usage = "cleanRows[res, estimator] converts Dataset/list rows into clean associations with valid estimator and TargetK values.";
+estimatorStats::usage = "estimatorStats[res, estimator] computes Pearson and Spearman statistics against TargetK.";
+
+radiusScan::usage = "radiusScan[data, radii] evaluates estimatorStats for each graph radius.";
+fastRadiusScan::usage = "fastRadiusScan[data, radii] is an alias of radiusScan.";
+multiSeedRadiusScan::usage = "multiSeedRadiusScan[n, seeds, radii, k] runs Flamm benchmark scans across random seeds.";
+summarizeSeedScan::usage = "summarizeSeedScan[scan] summarizes multi-seed scan results by graph radius.";
+
+binnedFlammComparison::usage = "binnedFlammComparison[data, res, estimator, nbins] bins Flamm results radially and averages K and estimator values.";
+radialBinComparisonFast2::usage = "radialBinComparisonFast2[data, res, estimator, nbins] bins generic results radially using cleaned rows.";
+radialBinComparisonNoClean::usage = "radialBinComparisonNoClean[data, res, estimator, nbins] bins generic results radially without requiring TargetK.";
+corrFromBinned::usage = "corrFromBinned[binned] computes Corr(rMean, EstimatorMean).";
+matchedFlatFlammSeedScan::usage = "matchedFlatFlammSeedScan[n, seeds, k, radius, nbins] compares matched-flat and Flamm radial trends across seeds.";
+matchedFlatFlammKScan::usage = "matchedFlatFlammKScan[n, seeds, ks, radius, nbins] repeats matched-flat/Flamm seed scans across k values.";
+summarizeMatchedFlatKScan::usage = "summarizeMatchedFlatKScan[scan] summarizes matched-flat/Flamm correlations by k.";
+
+ensureDirectory::usage = "ensureDirectory[path] creates a directory if it does not exist.";
+exportDatasetCSV::usage = "exportDatasetCSV[path, data] exports Dataset/list-of-associations data as CSV.";
+
+Begin["`Private`"];
+
+(* ================================================================ *)
+(* Basic numerical helpers                                           *)
+(* ================================================================ *)
+
+ClearAll[validRealNumberQ, safeStd, safeCorrelation, rankData, spearmanCorr, cubicMeanDeviation];
+
+validRealNumberQ[x_] :=
+ Module[{y = Quiet[N[x]]},
+  NumberQ[y] &&
+   FreeQ[y, _Complex | Indeterminate | ComplexInfinity | DirectedInfinity[_]]
+ ];
+
+safeStd[x_List] :=
+ Module[{vals = Select[N[x], validRealNumberQ]},
+  If[Length[vals] < 2, 0, StandardDeviation[vals]]
+ ];
+
+safeCorrelation[x_List, y_List] :=
+ Module[{pairs, xx, yy},
+  pairs = Select[Transpose[{x, y}], validRealNumberQ[#[[1]]] && validRealNumberQ[#[[2]]] &];
+  If[Length[pairs] < 3, Return[Missing["InsufficientData"]]];
+  xx = N[pairs[[All, 1]]];
+  yy = N[pairs[[All, 2]]];
+  If[safeStd[xx] == 0 || safeStd[yy] == 0, Return[Missing["ZeroVariance"]]];
+  Correlation[xx, yy]
+ ];
 
 rankData[x_List] :=
- Module[{ord, sortedPairs, groups, ranks, pos, len, inds},
-  ord = Ordering[x];
-  sortedPairs = Transpose[{ord, x[[ord]]}];
-  groups = Split[sortedPairs, #1[[2]] == #2[[2]] &];
+ Module[{pairs, groups, ranks, pos = 1, inds, r},
+  pairs = SortBy[Transpose[{N[x], Range[Length[x]]}], First];
+  groups = SplitBy[pairs, First];
   ranks = ConstantArray[0., Length[x]];
-  pos = 1;
-
   Do[
-   inds = group[[All, 1]];
-   len = Length[group];
-   ranks[[inds]] = Mean[Range[pos, pos + len - 1]];
-   pos = pos + len;
-   ,
+   inds = group[[All, 2]];
+   r = Mean[Range[pos, pos + Length[group] - 1]];
+   ranks[[inds]] = r;
+   pos += Length[group],
    {group, groups}
   ];
-
   ranks
-];
+ ];
 
-ClearAll[cubicMeanDeviation];
+spearmanCorr[x_List, y_List] :=
+ Module[{pairs},
+  pairs = Select[Transpose[{x, y}], validRealNumberQ[#[[1]]] && validRealNumberQ[#[[2]]] &];
+  If[Length[pairs] < 3, Return[Missing["InsufficientData"]]];
+  safeCorrelation[rankData[pairs[[All, 1]]], rankData[pairs[[All, 2]]]]
+ ];
 
 cubicMeanDeviation[x_List] :=
- Module[{m},
-  If[Length[x] <= 1,
-   Missing["NotEnoughPoints"],
-   m = Mean[x];
-   Mean[Abs[x - m]^3]^(1/3)
-  ]
-];
+ Module[{vals = Select[N[x], validRealNumberQ], mu},
+  If[Length[vals] < 2, Return[0.]];
+  mu = Mean[vals];
+  N[(Mean[Abs[vals - mu]^3])^(1/3)]
+ ];
 
-ClearAll[spearmanCorr];
+(* ================================================================ *)
+(* Geometry and graph construction                                  *)
+(* ================================================================ *)
 
-spearmanCorr[x_, y_] :=
- Correlation[rankData[N[x]], rankData[N[y]]];
+ClearAll[makeKNNGraph, flatDiskPoints, hyperboloidPoints, flammPoints];
 
-(* ========================= *)
-(* Graph construction        *)
-(* ========================= *)
+Options[makeKNNGraph] = {"VertexCoordinates" -> Automatic};
 
-ClearAll[makeKNNGraph];
-
-makeKNNGraph[pts_, k_Integer : 12] :=
- Module[{n, nearest, neighborLists, pairs, edges},
-  n = Length[pts];
-  nearest = Nearest[Thread[pts -> Range[n]]];
-
-  neighborLists =
-   Table[
-    DeleteCases[nearest[pts[[i]], k + 1], i],
-    {i, n}
+makeKNNGraph[points_?MatrixQ, k_Integer?Positive, OptionsPattern[]] :=
+ Module[{n, nearest, edges, coords},
+  n = Length[points];
+  nearest = Nearest[points -> Range[n]];
+  edges =
+   DeleteDuplicates[
+    Flatten[
+     Table[
+      (UndirectedEdge @@ Sort[{i, #}]) & /@ DeleteCases[nearest[points[[i]], k + 1], i],
+      {i, n}
+     ],
+     1
+    ]
    ];
+  coords = OptionValue["VertexCoordinates"];
+  If[coords === Automatic,
+   coords = If[Length[points[[1]]] >= 2, points[[All, 1 ;; 2]], Automatic]
+  ];
+  Graph[Range[n], edges, VertexCoordinates -> coords]
+ ];
 
-  pairs =
-   Flatten[
-    Table[
-     ({i, #} & /@ neighborLists[[i]]),
-     {i, n}
-    ],
-    1
-   ];
+Options[flatDiskPoints] = {"RMin" -> 0.15, "RMax" -> 5.0};
 
-  pairs = DeleteDuplicates[Sort /@ pairs];
-  edges = UndirectedEdge @@@ pairs;
+flatDiskPoints[n_Integer?Positive, OptionsPattern[]] :=
+ Module[{rmin, rmax, r, theta},
+  rmin = OptionValue["RMin"];
+  rmax = OptionValue["RMax"];
+  r = Sqrt[RandomReal[{rmin^2, rmax^2}, n]];
+  theta = RandomReal[{0, 2 Pi}, n];
+  Transpose[{r Cos[theta], r Sin[theta]}]
+ ];
 
-  Graph[
-   Range[n],
-   edges,
-   VertexSize -> Tiny,
-   EdgeStyle -> Directive[Gray, Opacity[0.35]]
-  ]
-];
+Options[hyperboloidPoints] = {"RMin" -> 0.15, "RMax" -> 5.0, "HeightScale" -> 1.0};
 
-(* ========================= *)
-(* Benchmark point clouds    *)
-(* ========================= *)
+hyperboloidPoints[n_Integer?Positive, OptionsPattern[]] :=
+ Module[{rmin, rmax, scale, r, theta, z},
+  rmin = OptionValue["RMin"];
+  rmax = OptionValue["RMax"];
+  scale = OptionValue["HeightScale"];
+  r = Sqrt[RandomReal[{rmin^2, rmax^2}, n]];
+  theta = RandomReal[{0, 2 Pi}, n];
+  z = scale Sqrt[1 + r^2];
+  Transpose[{r Cos[theta], r Sin[theta], z}]
+ ];
 
-ClearAll[
-  flatDiskPoints,
-  hyperboloidPoints,
-  flammPoints,
-  kHyperboloid,
-  kSchwarzschild
-];
+Options[flammPoints] = {"RMin" -> Automatic, "RMax" -> 5.0};
 
-flatDiskPoints[n_, rmax_ : 3] :=
- Module[{rho, theta},
-  Table[
-   rho = rmax Sqrt[RandomReal[]];
-   theta = RandomReal[{0, 2 Pi}];
-   {rho Cos[theta], rho Sin[theta], 0},
-   {n}
-  ]
-];
+flammPoints[n_Integer?Positive, M_: 1/2, OptionsPattern[]] :=
+ Module[{rmin, rmax, r, theta, z},
+  rmin = OptionValue["RMin"];
+  rmax = OptionValue["RMax"];
+  If[rmin === Automatic, rmin = 2 M + 0.2];
+  r = Sqrt[RandomReal[{rmin^2, rmax^2}, n]];
+  theta = RandomReal[{0, 2 Pi}, n];
+  z = 2 Sqrt[2 M (r - 2 M)];
+  Transpose[{r Cos[theta], r Sin[theta], z}]
+ ];
 
-hyperboloidPoints[n_, nuMax_ : 1.8] :=
- Module[{mu, nu},
-  Table[
-   mu = RandomReal[{0, 2 Pi}];
-   nu = RandomReal[{-nuMax, nuMax}];
-   <|
-    "Coordinates" -> {Cosh[nu] Cos[mu], Cosh[nu] Sin[mu], Sinh[nu]},
-    "mu" -> mu,
-    "nu" -> nu
-   |>,
-   {n}
-  ]
-];
+ClearAll[schwarzschildK, buildFlatDataset, buildHyperboloidDataset, buildFlammDataset];
 
-kHyperboloid[nu_] := 4 Sech[nu]^4;
+schwarzschildK[r_, M_: 1/2] := 48 M^2/r^6;
 
-flammPoints[n_, M_ : 1/2, rmin_ : 1.05, rmax_ : 5] :=
- Module[{theta, rr, z},
-  Table[
-   theta = RandomReal[{0, 2 Pi}];
-   rr = RandomReal[{rmin, rmax}];
-   z = 2 Sqrt[2 M (rr - 2 M)];
-   <|
-    "Coordinates" -> {rr Cos[theta], rr Sin[theta], z},
-    "r" -> rr,
-    "theta" -> theta
-   |>,
-   {n}
-  ]
-];
+Options[buildFlatDataset] = {"RMin" -> 0.15, "RMax" -> 5.0};
 
-kSchwarzschild[r_, M_ : 1/2] := 48 M^2/r^6;
-
-(* ========================= *)
-(* Dataset builders          *)
-(* ========================= *)
-
-ClearAll[buildFlatDataset, buildHyperboloidDataset, buildFlammDataset];
-
-buildFlatDataset[n_, k_Integer : 12] :=
- Module[{pts, g},
-  pts = flatDiskPoints[n];
+buildFlatDataset[n_Integer?Positive, k_Integer?Positive, OptionsPattern[]] :=
+ Module[{pts, r, g},
+  pts = flatDiskPoints[n, "RMin" -> OptionValue["RMin"], "RMax" -> OptionValue["RMax"]];
+  r = Norm /@ pts;
   g = makeKNNGraph[pts, k];
-
   <|
    "Type" -> "Flat",
+   "Label" -> "Flat control",
    "N" -> n,
+   "k" -> k,
    "Points" -> pts,
+   "r" -> r,
    "Graph" -> g,
-   "TargetK" -> ConstantArray[0, n],
-   "k" -> k
+   "TargetK" -> ConstantArray[0., n]
   |>
-];
+ ];
 
-buildHyperboloidDataset[n_, k_Integer : 12] :=
- Module[{data, pts, nus, g, target},
-  data = hyperboloidPoints[n];
-  pts = data[[All, "Coordinates"]];
-  nus = data[[All, "nu"]];
+Options[buildHyperboloidDataset] = {"RMin" -> 0.15, "RMax" -> 5.0, "HeightScale" -> 1.0};
+
+buildHyperboloidDataset[n_Integer?Positive, k_Integer?Positive, OptionsPattern[]] :=
+ Module[{pts, r, g},
+  pts = hyperboloidPoints[
+    n,
+    "RMin" -> OptionValue["RMin"],
+    "RMax" -> OptionValue["RMax"],
+    "HeightScale" -> OptionValue["HeightScale"]
+    ];
+  r = Norm /@ pts[[All, 1 ;; 2]];
   g = makeKNNGraph[pts, k];
-  target = kHyperboloid /@ nus;
-
   <|
    "Type" -> "Hyperboloid",
+   "Label" -> "Hyperboloid-like benchmark",
    "N" -> n,
+   "k" -> k,
    "Points" -> pts,
-   "nu" -> nus,
-   "Graph" -> g,
-   "TargetK" -> target,
-   "k" -> k
+   "r" -> r,
+   "Graph" -> g
   |>
-];
+ ];
 
-buildFlammDataset[n_, M_ : 1/2, k_Integer : 12] :=
- Module[{data, pts, rs, g, target},
-  data = flammPoints[n, M];
-  pts = data[[All, "Coordinates"]];
-  rs = data[[All, "r"]];
+Options[buildFlammDataset] = {"RMin" -> Automatic, "RMax" -> 5.0};
+
+buildFlammDataset[n_Integer?Positive, M_: 1/2, k_Integer?Positive, OptionsPattern[]] :=
+ Module[{pts, r, targetK, g},
+  pts = flammPoints[n, M, "RMin" -> OptionValue["RMin"], "RMax" -> OptionValue["RMax"]];
+  r = Norm /@ pts[[All, 1 ;; 2]];
+  targetK = schwarzschildK[#, M] & /@ r;
   g = makeKNNGraph[pts, k];
-  target = kSchwarzschild[#, M] & /@ rs;
-
   <|
-   "Type" -> "FlammSchwarzschild",
+   "Type" -> "Flamm",
+   "Label" -> "Flamm / Schwarzschild",
    "N" -> n,
-   "Mass" -> M,
+   "k" -> k,
+   "M" -> M,
    "Points" -> pts,
-   "r" -> rs,
-   "Graph" -> g,
-   "TargetK" -> target,
-   "k" -> k
+   "r" -> r,
+   "TargetK" -> targetK,
+   "Graph" -> g
   |>
-];
+ ];
 
-(* ========================= *)
-(* Plotting                  *)
-(* ========================= *)
+ClearAll[getKeySafe, getPointsSafe, getRadialCoordinates, getTargetKValues];
 
-ClearAll[plotDataset2D, plotDataset3D];
-
-plotDataset2D[dataset_Association, label_ : Automatic] :=
- Module[{g, pts, title},
-  g = dataset["Graph"];
-  pts = dataset["Points"];
-  title = If[label === Automatic, dataset["Type"], label];
-
-  Graph[
-   VertexList[g],
-   EdgeList[g],
-   VertexCoordinates -> Thread[Range[Length[pts]] -> pts[[All, {1, 2}]]],
-   VertexSize -> Tiny,
-   EdgeStyle -> Directive[Gray, Opacity[0.35]],
-   PlotLabel -> title,
-   ImageSize -> Medium
+getKeySafe[data_, key_String, default_: Missing["KeyAbsent", key]] :=
+ Module[{a = If[AssociationQ[data], data, Association[Normal[data]]], sym = ToExpression[key]},
+  Which[
+   AssociationQ[a] && KeyExistsQ[a, key], a[key],
+   AssociationQ[a] && KeyExistsQ[a, sym], a[sym],
+   True, default
   ]
-];
+ ];
 
-plotDataset3D[dataset_Association, label_ : Automatic] :=
- Module[{g, pts, title},
-  g = dataset["Graph"];
-  pts = dataset["Points"];
-  title = If[label === Automatic, dataset["Type"], label];
+getPointsSafe[data_] := getKeySafe[data, "Points", $Failed];
+getRadialCoordinates[data_] := getKeySafe[data, "r", $Failed];
+getTargetKValues[data_] := getKeySafe[data, "TargetK", $Failed];
 
-  Graph3D[
-   VertexList[g],
-   EdgeList[g],
-   VertexCoordinates -> Thread[Range[Length[pts]] -> pts],
-   VertexSize -> Tiny,
-   EdgeStyle -> Directive[Gray, Opacity[0.35]],
-   PlotLabel -> title,
+buildMatchedFlatFromFlamm3[flammData_, k_Integer?Positive] :=
+ Module[{pts3, xy, r, theta, pts, g},
+  pts3 = getPointsSafe[flammData];
+  If[pts3 === $Failed, Return[$Failed]];
+  xy = pts3[[All, 1 ;; 2]];
+  r = Norm /@ xy;
+  theta = ArcTan @@@ xy;
+  pts = Transpose[{r Cos[theta], r Sin[theta]}];
+  g = makeKNNGraph[pts, k];
+  <|
+   "Type" -> "MatchedFlat",
+   "Label" -> "Matched flat control",
+   "N" -> Length[pts],
+   "k" -> k,
+   "Points" -> pts,
+   "r" -> r,
+   "Graph" -> g,
+   "TargetK" -> ConstantArray[0., Length[pts]]
+  |>
+ ];
+
+(* ================================================================ *)
+(* Plotting utilities, including colored geometry points             *)
+(* ================================================================ *)
+
+ClearAll[plotDataset2D, plotDataset3D, shellAndBallVertices, plotGeometryShell2D, plotGeometryShell3D, coloredGeometryPlot];
+
+Options[plotDataset2D] = {"HighlightedVertices" -> {}, "PointSize" -> 0.010, "HighlightPointSize" -> 0.020};
+
+plotDataset2D[data_, label_: Automatic, OptionsPattern[]] :=
+ Module[{pts, hl, normal, title},
+  pts = getPointsSafe[data];
+  If[pts === $Failed, Return[$Failed]];
+  pts = pts[[All, 1 ;; 2]];
+  hl = OptionValue["HighlightedVertices"];
+  normal = Complement[Range[Length[pts]], hl];
+  title = If[label === Automatic, getKeySafe[data, "Label", "Dataset"], label];
+  Show[
+   ListPlot[
+    pts[[normal]],
+    AspectRatio -> 1,
+    PlotStyle -> Directive[GrayLevel[0.55], PointSize[OptionValue["PointSize"]]],
+    Frame -> True,
+    Axes -> False,
+    ImageSize -> Medium,
+    PlotLabel -> title
+    ],
+   If[Length[hl] > 0,
+    ListPlot[
+     pts[[hl]],
+     AspectRatio -> 1,
+     PlotStyle -> Directive[Red, PointSize[OptionValue["HighlightPointSize"]]]
+     ],
+    Graphics[{}]
+    ]
+   ]
+ ];
+
+Options[plotDataset3D] = {"HighlightedVertices" -> {}, "PointSize" -> 0.010, "HighlightPointSize" -> 0.025};
+
+plotDataset3D[data_, label_: Automatic, OptionsPattern[]] :=
+ Module[{pts, hl, normal, title},
+  pts = getPointsSafe[data];
+  If[pts === $Failed, Return[$Failed]];
+  If[Length[pts[[1]]] < 3, Return[plotDataset2D[data, label]]];
+  hl = OptionValue["HighlightedVertices"];
+  normal = Complement[Range[Length[pts]], hl];
+  title = If[label === Automatic, getKeySafe[data, "Label", "Dataset"], label];
+  Show[
+   ListPointPlot3D[
+    pts[[normal]],
+    PlotStyle -> Directive[GrayLevel[0.55], PointSize[OptionValue["PointSize"]]],
+    BoxRatios -> Automatic,
+    Axes -> True,
+    ImageSize -> Medium,
+    PlotLabel -> title
+    ],
+   If[Length[hl] > 0,
+    ListPointPlot3D[
+     pts[[hl]],
+     PlotStyle -> Directive[Red, PointSize[OptionValue["HighlightPointSize"]]]
+     ],
+    Graphics3D[{}]
+    ]
+   ]
+ ];
+
+shellAndBallVertices[data_, center_Integer, radius_Integer?Positive] :=
+ Module[{g, verts, dist},
+  g = getKeySafe[data, "Graph", $Failed];
+  If[g === $Failed, Return[$Failed]];
+  verts = VertexList[g];
+  dist = AssociationThread[verts -> (GraphDistance[g, center, #] & /@ verts)];
+  <|
+   "Center" -> {center},
+   "Ball" -> Select[verts, validRealNumberQ[dist[#]] && dist[#] <= radius &],
+   "Shell" -> Select[verts, validRealNumberQ[dist[#]] && dist[#] == radius &]
+  |>
+ ];
+
+plotGeometryShell2D[data_, center_Integer, radius_Integer?Positive, label_: Automatic] :=
+ Module[{pts, sets, centerPts, shellPts, ballInteriorPts, otherPts, title},
+  pts = getPointsSafe[data];
+  If[pts === $Failed, Return[$Failed]];
+  pts = pts[[All, 1 ;; 2]];
+  sets = shellAndBallVertices[data, center, radius];
+  If[sets === $Failed, Return[$Failed]];
+  centerPts = sets["Center"];
+  shellPts = Complement[sets["Shell"], centerPts];
+  ballInteriorPts = Complement[sets["Ball"], shellPts, centerPts];
+  otherPts = Complement[Range[Length[pts]], sets["Ball"]];
+  title = If[label === Automatic, getKeySafe[data, "Label", "Dataset"], label];
+  Show[
+   ListPlot[pts[[otherPts]], PlotStyle -> Directive[GrayLevel[0.75], PointSize[0.008]]],
+   ListPlot[pts[[ballInteriorPts]], PlotStyle -> Directive[LightBlue, PointSize[0.012]]],
+   ListPlot[pts[[shellPts]], PlotStyle -> Directive[Orange, PointSize[0.016]]],
+   ListPlot[pts[[centerPts]], PlotStyle -> Directive[Red, PointSize[0.025]]],
+   Frame -> True,
+   Axes -> False,
+   AspectRatio -> 1,
    ImageSize -> Medium,
-   Boxed -> False,
-   ViewPoint -> {2, -2, 1.5}
+   PlotLabel -> title
+   ]
+ ];
+
+plotGeometryShell3D[data_, center_Integer, radius_Integer?Positive, label_: Automatic] :=
+ Module[{pts, sets, centerPts, shellPts, ballInteriorPts, otherPts, title},
+  pts = getPointsSafe[data];
+  If[pts === $Failed, Return[$Failed]];
+  If[Length[pts[[1]]] < 3, Return[plotGeometryShell2D[data, center, radius, label]]];
+  sets = shellAndBallVertices[data, center, radius];
+  If[sets === $Failed, Return[$Failed]];
+  centerPts = sets["Center"];
+  shellPts = Complement[sets["Shell"], centerPts];
+  ballInteriorPts = Complement[sets["Ball"], shellPts, centerPts];
+  otherPts = Complement[Range[Length[pts]], sets["Ball"]];
+  title = If[label === Automatic, getKeySafe[data, "Label", "Dataset"], label];
+  Show[
+   ListPointPlot3D[pts[[otherPts]], PlotStyle -> Directive[GrayLevel[0.75], PointSize[0.008]]],
+   ListPointPlot3D[pts[[ballInteriorPts]], PlotStyle -> Directive[LightBlue, PointSize[0.012]]],
+   ListPointPlot3D[pts[[shellPts]], PlotStyle -> Directive[Orange, PointSize[0.016]]],
+   ListPointPlot3D[pts[[centerPts]], PlotStyle -> Directive[Red, PointSize[0.030]]],
+   BoxRatios -> Automatic,
+   ImageSize -> Medium,
+   PlotLabel -> title
+   ]
+ ];
+
+coloredGeometryPlot[data_, center_Integer, radius_Integer?Positive, label_: Automatic] :=
+ Module[{pts = getPointsSafe[data]},
+  If[pts === $Failed, Return[$Failed]];
+  If[Length[pts[[1]]] >= 3,
+   plotGeometryShell3D[data, center, radius, label],
+   plotGeometryShell2D[data, center, radius, label]
   ]
-];
+ ];
 
-(* ========================= *)
-(* BFS and estimator         *)
-(* ========================= *)
+(* ================================================================ *)
+(* Shortest-path anisotropy estimator                               *)
+(* ================================================================ *)
 
-ClearAll[
-  precomputeAdjacency,
-  shortestPathCountsFromAdj,
-  estimatorFromBFS,
-  pathAnisotropyEstimator
-];
+ClearAll[precomputeAdjacency, shortestPathCountsFromAdj, pathAnisotropyEstimator];
 
 precomputeAdjacency[g_Graph] :=
- Module[{verts},
-  verts = VertexList[g];
-  AssociationThread[
-   verts,
-   (AdjacencyList[g, #] &) /@ verts
-  ]
-];
+ AssociationThread[VertexList[g] -> (AdjacencyList[g, #] & /@ VertexList[g])];
 
-shortestPathCountsFromAdj[adj_Association, source_, maxRadius_Integer] :=
- Module[{dist, counts, frontier, next, d},
+shortestPathCountsFromAdj[adj_Association, source_] :=
+ Module[{verts, dist, counts, queue, v, nbrs},
+  verts = Keys[adj];
+  dist = AssociationThread[verts -> ConstantArray[Infinity, Length[verts]]];
+  counts = AssociationThread[verts -> ConstantArray[0, Length[verts]]];
+  dist[source] = 0;
+  counts[source] = 1;
+  queue = {source};
+  While[Length[queue] > 0,
+   v = First[queue];
+   queue = Rest[queue];
+   nbrs = adj[v];
+   Do[
+    Which[
+     dist[u] === Infinity,
+     dist[u] = dist[v] + 1;
+     counts[u] = counts[v];
+     queue = Append[queue, u],
 
-  dist = <|source -> 0|>;
-  counts = <|source -> 1|>;
-
-  frontier = {source};
-  d = 0;
-
-  While[frontier =!= {} && d < maxRadius,
-
-   d++;
-   next = {};
-
-   Scan[
-    Function[u,
-     Scan[
-      Function[nb,
-       If[! KeyExistsQ[dist, nb],
-        AssociateTo[dist, nb -> d];
-        AssociateTo[counts, nb -> Lookup[counts, u, 0]];
-        next = Append[next, nb],
-        If[Lookup[dist, nb, Infinity] === d,
-         AssociateTo[
-          counts,
-          nb -> Lookup[counts, nb, 0] + Lookup[counts, u, 0]
-         ]
-        ]
-       ]
-      ],
-      Lookup[adj, u, {}]
-     ]
-    ],
-    frontier
+     dist[u] == dist[v] + 1,
+     counts[u] = counts[u] + counts[v]
+     ],
+    {u, nbrs}
+    ];
    ];
+  <|"Distance" -> dist, "Counts" -> counts|>
+ ];
 
-   frontier = DeleteDuplicates[next];
-  ];
-
-  <|"Distances" -> dist, "Counts" -> counts|>
-];
-
-estimatorFromBFS[source_, radius_Integer, bfs_Association] :=
- Module[{dist, counts, shell, pathCounts, oldCMD, normCMD, logCMD},
-  dist = bfs["Distances"];
+pathAnisotropyEstimator[g_Graph, p_Integer, radius_Integer?Positive, adj_: Automatic] :=
+ Module[{adjacency, bfs, dist, counts, shell, countVals, logVals},
+  adjacency = If[adj === Automatic, precomputeAdjacency[g], adj];
+  bfs = shortestPathCountsFromAdj[adjacency, p];
+  dist = bfs["Distance"];
   counts = bfs["Counts"];
-
-  shell = Keys @ Select[dist, # == radius &];
-
-  If[Length[shell] <= 2,
+  shell = Select[Keys[dist], dist[#] == radius &];
+  If[Length[shell] < 2,
    Return[
     <|
-     "Vertex" -> source,
+     "Vertex" -> p,
      "Radius" -> radius,
      "ShellSize" -> Length[shell],
-     "MeanPathCount" -> Missing["TooSmallShell"],
-     "OldCMD" -> Missing["TooSmallShell"],
-     "NormalizedCMD" -> Missing["TooSmallShell"],
-     "LogCMD" -> Missing["TooSmallShell"]
+     "MeanCount" -> Missing["InsufficientShell"],
+     "CMD" -> Missing["InsufficientShell"],
+     "LogCMD" -> Missing["InsufficientShell"]
     |>
    ]
   ];
-
-  pathCounts = Lookup[counts, shell, 0];
-
-  oldCMD = cubicMeanDeviation[pathCounts]/radius;
-  normCMD = cubicMeanDeviation[pathCounts]/(Mean[pathCounts] + 10^-12);
-  logCMD = cubicMeanDeviation[Log[pathCounts + 10^-12]];
-
+  countVals = N[Lookup[counts, shell]];
+  logVals = Log[countVals];
   <|
-   "Vertex" -> source,
+   "Vertex" -> p,
    "Radius" -> radius,
    "ShellSize" -> Length[shell],
-   "MeanPathCount" -> Mean[pathCounts],
-   "OldCMD" -> oldCMD,
-   "NormalizedCMD" -> normCMD,
-   "LogCMD" -> logCMD
+   "MeanCount" -> Mean[countVals],
+   "CMD" -> cubicMeanDeviation[countVals],
+   "LogCMD" -> cubicMeanDeviation[logVals]
   |>
-];
-
-pathAnisotropyEstimator[g_Graph, source_, radius_Integer] :=
- Module[{adj, bfs},
-  adj = precomputeAdjacency[g];
-  bfs = shortestPathCountsFromAdj[adj, source, radius];
-  estimatorFromBFS[source, radius, bfs]
-];
-
-(* ========================= *)
-(* Evaluation                *)
-(* ========================= *)
-
-ClearAll[evaluateDataset, cleanRows, evaluateDatasetAllRadii];
-
-evaluateDataset[dataset_Association, radius_Integer] :=
- Module[{g, verts, target, targetAssoc, adj, rows},
-  g = dataset["Graph"];
-  verts = VertexList[g];
-  target = dataset["TargetK"];
-  targetAssoc = AssociationThread[Range[Length[target]], target];
-  adj = precomputeAdjacency[g];
-
-  rows =
-   Map[
-    Function[v,
-     Module[{bfs},
-      bfs = shortestPathCountsFromAdj[adj, v, radius];
-      Join[
-       estimatorFromBFS[v, radius, bfs],
-       <|
-        "TargetK" -> Lookup[targetAssoc, v, Missing["NoTarget"]],
-        "Type" -> dataset["Type"],
-        "N" -> dataset["N"]
-       |>
-      ]
-     ]
-    ],
-    verts
-   ];
-
-  Dataset[rows]
-];
-
-cleanRows[ds_Dataset, estimatorName_ : "LogCMD"] :=
- Select[
-  Normal[ds],
-  NumericQ[Lookup[#, "TargetK"]] &&
-   NumericQ[Lookup[#, estimatorName]] &
  ];
 
-evaluateDatasetAllRadii[dataset_Association, radii_List] :=
- Module[{g, verts, target, targetAssoc, adj, maxRadius, rows},
-  g = dataset["Graph"];
-  verts = VertexList[g];
-  target = dataset["TargetK"];
-  targetAssoc = AssociationThread[Range[Length[target]], target];
+ClearAll[evaluateDataset];
+
+Options[evaluateDataset] = {"Vertices" -> Automatic};
+
+evaluateDataset[data_Association, radius_Integer?Positive, OptionsPattern[]] :=
+ Module[{g, verts, adj, rvals, kvals, rows},
+  g = getKeySafe[data, "Graph", $Failed];
+  If[g === $Failed, Return[$Failed]];
+  verts = OptionValue["Vertices"];
+  If[verts === Automatic, verts = VertexList[g]];
   adj = precomputeAdjacency[g];
-  maxRadius = Max[radii];
-
-  rows =
-   Flatten[
-    Map[
-     Function[v,
-      Module[{bfs},
-       bfs = shortestPathCountsFromAdj[adj, v, maxRadius];
-
-       Join[
-          estimatorFromBFS[v, #, bfs],
-          <|
-           "TargetK" -> Lookup[targetAssoc, v, Missing["NoTarget"]],
-           "Type" -> dataset["Type"],
-           "N" -> dataset["N"]
-          |>
-        ] & /@ radii
-       ]
-      ],
-     verts
+  rvals = getRadialCoordinates[data];
+  kvals = getTargetKValues[data];
+  rows = Table[
+    Module[{row = pathAnisotropyEstimator[g, v, radius, adj], extra = <||>},
+     If[ListQ[rvals] && 1 <= v <= Length[rvals], extra = Join[extra, <|"r" -> rvals[[v]]|>]];
+     If[ListQ[kvals] && 1 <= v <= Length[kvals], extra = Join[extra, <|"TargetK" -> kvals[[v]]|>]];
+     Join[row, extra]
     ],
-    1
-   ];
-
+    {v, verts}
+    ];
   Dataset[rows]
-];
+ ];
 
-(* ========================= *)
-(* Scans and summaries       *)
-(* ========================= *)
+(* ================================================================ *)
+(* Row cleaning and estimator statistics                             *)
+(* ================================================================ *)
 
-ClearAll[
-  fastRadiusScan,
-  oneSeedRadiusScan,
-  multiSeedRadiusScan,
-  summarizeSeedScan
-];
+ClearAll[rowAssoc, getRowValue, cleanRows, estimatorStats];
 
-fastRadiusScan[dataset_Association, radii_List, estimatorName_ : "LogCMD"] :=
- Module[{ds, rows, sub, pairs},
-  ds = evaluateDatasetAllRadii[dataset, radii];
-  rows = Normal[ds];
+rowAssoc[row_] :=
+ Module[{n = Normal[row]},
+  Which[
+   AssociationQ[row], row,
+   AssociationQ[n], n,
+   ListQ[n] && AllTrue[n, MatchQ[#, _Rule] &], Association[n],
+   True, <||>
+  ]
+ ];
 
-  Dataset[
-   Table[
-    sub =
-     Select[
-      rows,
-      #["Radius"] == rad &&
-        NumericQ[Lookup[#, "TargetK"]] &&
-        NumericQ[Lookup[#, estimatorName]] &
-     ];
+getRowValue[row_, key_String] :=
+ Module[{a = rowAssoc[row], sym = ToExpression[key]},
+  Which[
+   KeyExistsQ[a, key], a[key],
+   KeyExistsQ[a, sym], a[sym],
+   True, Missing["KeyAbsent", key]
+  ]
+ ];
 
-    pairs = N[({#["TargetK"], #[estimatorName]} &) /@ sub];
+cleanRows[res_, estimator_: "LogCMD"] :=
+ Module[{rows = Normal[res]},
+  Reap[
+    Do[
+     Module[{v, rad, e, k, r, shell},
+      v = getRowValue[row, "Vertex"];
+      rad = getRowValue[row, "Radius"];
+      e = Quiet[N[getRowValue[row, estimator]]];
+      k = Quiet[N[getRowValue[row, "TargetK"]]];
+      r = Quiet[N[getRowValue[row, "r"]]];
+      shell = getRowValue[row, "ShellSize"];
+      If[validRealNumberQ[e] && validRealNumberQ[k],
+       Sow[
+        <|
+         "Vertex" -> v,
+         "Radius" -> rad,
+         "ShellSize" -> shell,
+         "r" -> r,
+         "Estimator" -> N[e],
+         "TargetK" -> N[k]
+        |>
+       ]
+      ]
+     ],
+     {row, rows}
+    ]
+   ][[2]] /. {} -> {{} } // First
+ ];
 
-    If[Length[pairs] < 5,
+estimatorStats[res_, estimator_: "LogCMD"] :=
+ Module[{rows, e, k},
+  rows = cleanRows[res, estimator];
+  If[Length[rows] < 3, Return[<|"Rows" -> Length[rows], "Pearson" -> Missing["InsufficientData"], "Spearman" -> Missing["InsufficientData"]|>]];
+  e = Lookup[rows, "Estimator"];
+  k = Lookup[rows, "TargetK"];
+  <|
+   "Rows" -> Length[rows],
+   "Pearson" -> safeCorrelation[e, k],
+   "Spearman" -> spearmanCorr[e, k]
+  |>
+ ];
+
+(* ================================================================ *)
+(* Radius scans and multi-seed scans                                 *)
+(* ================================================================ *)
+
+ClearAll[radiusScan, fastRadiusScan, multiSeedRadiusScan, summarizeSeedScan];
+
+radiusScan[data_Association, radii_List, estimator_: "LogCMD"] :=
+ Dataset[
+  Table[
+   Module[{res, stats},
+    res = evaluateDataset[data, radius];
+    stats = estimatorStats[res, estimator];
+    Join[
      <|
-      "Radius" -> rad,
-      "Rows" -> Length[pairs],
-      "Pearson" -> Missing["TooFewRows"],
-      "Spearman" -> Missing["TooFewRows"]
+      "Type" -> getKeySafe[data, "Type", Missing["Type"]],
+      "N" -> getKeySafe[data, "N", Missing["N"]],
+      "k" -> getKeySafe[data, "k", Missing["k"]],
+      "Radius" -> radius
      |>,
-     <|
-      "Radius" -> rad,
-      "Rows" -> Length[pairs],
-      "Pearson" -> N@Correlation[pairs[[All, 1]], pairs[[All, 2]]],
-      "Spearman" -> N@spearmanCorr[pairs[[All, 1]], pairs[[All, 2]]]
-     |>
-    ],
-    {rad, radii}
-   ]
+     stats
+    ]
+   ],
+   {radius, radii}
   ]
-];
+ ];
 
-oneSeedRadiusScan[n_, seed_, radii_List, k_Integer : 14] :=
- Module[{data, scan},
-  SeedRandom[seed];
-  data = buildFlammDataset[n, 1/2, k];
-  scan = Normal[fastRadiusScan[data, radii, "LogCMD"]];
+fastRadiusScan[data_Association, radii_List, estimator_: "LogCMD"] := radiusScan[data, radii, estimator];
 
-  Map[
-   Join[#, <|"Seed" -> seed, "N" -> n, "k" -> k|>] &,
-   scan
-  ]
-];
-
-multiSeedRadiusScan[n_, seeds_List, radii_List, k_Integer : 14] :=
+multiSeedRadiusScan[n_Integer?Positive, seeds_List, radii_List, k_Integer?Positive, M_: 1/2, estimator_: "LogCMD"] :=
  Dataset[
   Flatten[
-   oneSeedRadiusScan[n, #, radii, k] & /@ seeds,
+   Table[
+    Module[{data, scan},
+     SeedRandom[seed];
+     data = buildFlammDataset[n, M, k];
+     scan = Normal[radiusScan[data, radii, estimator]];
+     Map[Join[<|"Seed" -> seed|>, #] &, scan]
+    ],
+    {seed, seeds}
+   ],
    1
   ]
-];
+ ];
 
-summarizeSeedScan[scan_Dataset] :=
- Module[{rows, grouped},
+summarizeSeedScan[scan_] :=
+ Module[{rows, groups},
   rows = Normal[scan];
-  grouped = GroupBy[rows, #Radius &];
-
+  groups = GroupBy[rows, {#["N"] &, #["k"] &, #["Radius"] &}];
   Dataset[
    KeyValueMap[
-    Function[{rad, vals},
+    Function[{key, vals},
      <|
-      "Radius" -> rad,
-      "MeanPearson" -> Mean[vals[[All, "Pearson"]]],
-      "MeanSpearman" -> Mean[vals[[All, "Spearman"]]],
-      "StdSpearman" -> StandardDeviation[vals[[All, "Spearman"]]]
+      "N" -> key[[1]],
+      "k" -> key[[2]],
+      "Radius" -> key[[3]],
+      "MeanPearson" -> Mean[Select[Lookup[vals, "Pearson"], validRealNumberQ]],
+      "MeanSpearman" -> Mean[Select[Lookup[vals, "Spearman"], validRealNumberQ]],
+      "StdSpearman" -> safeStd[Lookup[vals, "Spearman"]],
+      "MeanRows" -> Mean[Lookup[vals, "Rows"]],
+      "Seeds" -> Length[vals]
      |>
     ],
-    grouped
+    groups
    ]
   ]
-];
+ ];
 
-(* ========================= *)
-(* Radial binning            *)
-(* ========================= *)
+(* ================================================================ *)
+(* Radial binning                                                    *)
+(* ================================================================ *)
 
-ClearAll[binnedFlammComparison];
+ClearAll[assignRadialBins, radialBinComparisonNoClean, radialBinComparisonFast2, binnedFlammComparison, corrFromBinned];
 
-binnedFlammComparison[
-  dataset_Association,
-  ds_Dataset,
-  estimatorName_ : "LogCMD",
-  nbins_Integer : 12
-] :=
- Module[{rows, rs, rAssoc, joined, rmin, rmax, binEdges, binned},
-  rows = cleanRows[ds, estimatorName];
-
-  If[! KeyExistsQ[dataset, "r"],
-   Return["This dataset does not contain radial coordinates under key \"r\"."]
-  ];
-
-  rs = dataset["r"];
-  rAssoc = AssociationThread[Range[Length[rs]], rs];
-
-  joined =
-   Map[
+assignRadialBins[rows_List, nbins_Integer?Positive] :=
+ Module[{rmin, rmax},
+  If[Length[rows] == 0, Return[{}]];
+  rmin = Min[Lookup[rows, "r"]];
+  rmax = Max[Lookup[rows, "r"]];
+  If[rmax == rmin, Return[Map[Join[#, <|"Bin" -> 1|>] &, rows]]];
+  Map[
+   Function[row,
     Join[
-      #,
-      <|"r" -> Lookup[rAssoc, #["Vertex"], Missing["NoR"]]|>
-    ] &,
-    rows
-   ];
+     row,
+     <|
+      "Bin" -> Min[nbins, Max[1, 1 + Floor[nbins (row["r"] - rmin)/(rmax - rmin)]]]
+     |>
+    ]
+   ],
+   rows
+  ]
+ ];
 
-  joined =
-   Select[
-    joined,
-    NumericQ[#["r"]] &&
-      NumericQ[#["TargetK"]] &&
-      NumericQ[#[estimatorName]] &
-   ];
-
-  rmin = Min[Map[#["r"] &, joined]];
-  rmax = Max[Map[#["r"] &, joined]];
-  binEdges = Subdivide[rmin, rmax, nbins];
-
-  binned =
-   Table[
-    Module[{sub},
-     sub =
-      Select[
-       joined,
-       binEdges[[i]] <= #["r"] < binEdges[[i + 1]] &
-      ];
-
-     If[Length[sub] < 5,
-      Nothing,
-      <|
-       "Bin" -> i,
-       "rMin" -> binEdges[[i]],
-       "rMax" -> binEdges[[i + 1]],
-       "rMean" -> Mean[Map[#["r"] &, sub]],
-       "KMean" -> Mean[Map[#["TargetK"] &, sub]],
-       "EstimatorMean" -> Mean[Map[#[estimatorName] &, sub]],
-       "EstimatorStd" -> StandardDeviation[Map[#[estimatorName] &, sub]],
-       "Count" -> Length[sub]
-      |>
+radialBinComparisonNoClean[data_, res_, estimator_: "LogCMD", nbins_Integer?Positive] :=
+ Module[{rawRows, rvals, rows, withBins, grouped, bins},
+  rawRows = Normal[res];
+  rvals = getRadialCoordinates[data];
+  If[rvals === $Failed, Return[$Failed]];
+  rows =
+   Reap[
+     Do[
+      Module[{v, e},
+       v = getRowValue[row, "Vertex"];
+       e = Quiet[N[getRowValue[row, estimator]]];
+       If[IntegerQ[v] && 1 <= v <= Length[rvals] && validRealNumberQ[e],
+        Sow[<|"Vertex" -> v, "r" -> N[rvals[[v]]], "Estimator" -> N[e]|>]
+       ]
+      ],
+      {row, rawRows}
      ]
-    ],
-    {i, Length[binEdges] - 1}
-   ];
+    ][[2]] /. {} -> {{} } // First;
+  If[Length[rows] == 0, Return[{}]];
+  withBins = assignRadialBins[rows, nbins];
+  grouped = GroupBy[withBins, #["Bin"] &];
+  bins = Sort[Keys[grouped]];
+  Table[
+   <|
+    "Bin" -> b,
+    "rMean" -> Mean[Lookup[grouped[b], "r"]],
+    "EstimatorMean" -> Mean[Lookup[grouped[b], "Estimator"]],
+    "EstimatorStd" -> safeStd[Lookup[grouped[b], "Estimator"]],
+    "Count" -> Length[grouped[b]]
+   |>,
+   {b, bins}
+  ]
+ ];
 
-  Dataset[binned]
-];
+radialBinComparisonFast2[data_, res_, estimator_: "LogCMD", nbins_Integer?Positive] :=
+ Module[{rows, withBins, grouped, bins},
+  rows = cleanRows[res, estimator];
+  rows = Select[rows, validRealNumberQ[#["r"]] && validRealNumberQ[#["Estimator"]] &];
+  If[Length[rows] == 0, Return[{}]];
+  withBins = assignRadialBins[rows, nbins];
+  grouped = GroupBy[withBins, #["Bin"] &];
+  bins = Sort[Keys[grouped]];
+  Table[
+   <|
+    "Bin" -> b,
+    "rMean" -> Mean[Lookup[grouped[b], "r"]],
+    "EstimatorMean" -> Mean[Lookup[grouped[b], "Estimator"]],
+    "EstimatorStd" -> safeStd[Lookup[grouped[b], "Estimator"]],
+    "Count" -> Length[grouped[b]]
+   |>,
+   {b, bins}
+  ]
+ ];
+
+binnedFlammComparison[data_, res_, estimator_: "LogCMD", nbins_Integer?Positive] :=
+ Module[{rows, withBins, grouped, bins},
+  rows = cleanRows[res, estimator];
+  rows = Select[rows, validRealNumberQ[#["r"]] && validRealNumberQ[#["Estimator"]] && validRealNumberQ[#["TargetK"]] &];
+  If[Length[rows] == 0, Return[{}]];
+  withBins = assignRadialBins[rows, nbins];
+  grouped = GroupBy[withBins, #["Bin"] &];
+  bins = Sort[Keys[grouped]];
+  Table[
+   <|
+    "Bin" -> b,
+    "rMean" -> Mean[Lookup[grouped[b], "r"]],
+    "KMean" -> Mean[Lookup[grouped[b], "TargetK"]],
+    "EstimatorMean" -> Mean[Lookup[grouped[b], "Estimator"]],
+    "EstimatorStd" -> safeStd[Lookup[grouped[b], "Estimator"]],
+    "Count" -> Length[grouped[b]]
+   |>,
+   {b, bins}
+  ]
+ ];
+
+corrFromBinned[binned_List] := safeCorrelation[Lookup[binned, "rMean"], Lookup[binned, "EstimatorMean"]];
+
+(* ================================================================ *)
+(* Matched-flat controls                                             *)
+(* ================================================================ *)
+
+ClearAll[matchedFlatFlammSeedScan, matchedFlatFlammKScan, summarizeMatchedFlatKScan];
+
+matchedFlatFlammSeedScan[n_Integer?Positive, seeds_List, k_Integer?Positive, radius_Integer?Positive, nbins_Integer?Positive, M_: 1/2] :=
+ Table[
+  Module[{flamm, matchedFlat, resFlamm, resMatched, binnedFlamm, binnedMatched, corrFlamm, corrMatched},
+   SeedRandom[seed];
+   flamm = buildFlammDataset[n, M, k];
+   matchedFlat = buildMatchedFlatFromFlamm3[flamm, k];
+   resFlamm = evaluateDataset[flamm, radius];
+   resMatched = evaluateDataset[matchedFlat, radius];
+   binnedFlamm = radialBinComparisonNoClean[flamm, resFlamm, "LogCMD", nbins];
+   binnedMatched = radialBinComparisonNoClean[matchedFlat, resMatched, "LogCMD", nbins];
+   corrFlamm = corrFromBinned[binnedFlamm];
+   corrMatched = corrFromBinned[binnedMatched];
+   <|
+    "Seed" -> seed,
+    "N" -> n,
+    "k" -> k,
+    "Radius" -> radius,
+    "Bins" -> nbins,
+    "MatchedFlatCorrRLogCMD" -> N[corrMatched],
+    "FlammCorrRLogCMD" -> N[corrFlamm],
+    "Difference" -> N[corrFlamm - corrMatched]
+   |>
+  ],
+  {seed, seeds}
+ ];
+
+matchedFlatFlammKScan[n_Integer?Positive, seeds_List, ks_List, radius_Integer?Positive, nbins_Integer?Positive, M_: 1/2] :=
+ Flatten[
+  Table[
+   matchedFlatFlammSeedScan[n, seeds, k, radius, nbins, M],
+   {k, ks}
+  ],
+  1
+ ];
+
+summarizeMatchedFlatKScan[scan_List] :=
+ Module[{ks = Sort[DeleteDuplicates[Lookup[scan, "k"]]]},
+  Table[
+   Module[{rows, mf, fl},
+    rows = Select[scan, #["k"] == k &];
+    mf = Lookup[rows, "MatchedFlatCorrRLogCMD"];
+    fl = Lookup[rows, "FlammCorrRLogCMD"];
+    <|
+     "k" -> k,
+     "MatchedFlatMean" -> Mean[mf],
+     "MatchedFlatStd" -> safeStd[mf],
+     "FlammMean" -> Mean[fl],
+     "FlammStd" -> safeStd[fl]
+    |>
+   ],
+   {k, ks}
+  ]
+ ];
+
+(* ================================================================ *)
+(* Export helpers                                                    *)
+(* ================================================================ *)
+
+ClearAll[ensureDirectory, exportDatasetCSV];
+
+ensureDirectory[path_String] := If[! DirectoryQ[path], CreateDirectory[path, CreateIntermediateDirectories -> True]];
+
+exportDatasetCSV[path_String, data_] :=
+ Module[{dir = DirectoryName[path], rows = Normal[data]},
+  If[StringQ[dir] && dir =!= "", ensureDirectory[dir]];
+  Export[path, rows]
+ ];
+
+End[];
+EndPackage[];
