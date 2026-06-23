@@ -29,13 +29,13 @@ The current interpretation is that $C_{\log}$ tracks the **curvature ordering/pr
 Given a graph $G$, a center vertex $p$, and a graph-distance radius $r_g$, define the graph-distance ball
 
 $$
-B_{r_g}(p) = { q \in G \mid d(p,q) \le r_g },
+B_{r_g}(p) = \{ q \in G \mid d(p,q) \le r_g \},
 $$
 
 and the graph-distance shell
 
 $$
-S_{r_g}(p) = { q \in G \mid d(p,q) = r_g }.
+S_{r_g}(p) = \{ q \in G \mid d(p,q) = r_g \}.
 $$
 
 The ball contains all vertices within $r_g$ graph steps of $p$. The shell is only the boundary layer: the vertices exactly $r_g$ graph steps away.
@@ -57,11 +57,7 @@ The estimator measures how uneven these shortest-path counts are across the shel
 The current main estimator is the logarithmic cubic-mean-deviation version:
 
 $$
-C_{\log}(p, r_g) =
-\mathrm{CMD}*{,q \in S*{r_g}(p)}
-!\big(
-\log N_{\mathrm{geo}}(p,q)
-\big).
+C_{\log}(p, r_g) = \mathrm{CMD}_{q \in S_{r_g}(p)} \big( \log N_{\mathrm{geo}}(p,q) \big).
 $$
 
 This should be understood as a **curvature-sensitive diagnostic**, not yet as a rigorously derived discrete curvature invariant.
