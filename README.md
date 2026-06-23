@@ -6,7 +6,7 @@ The project began as an exploratory Wolfram Community / Wolfram Summer School id
 
 The current goal is not to claim that the estimator is already a discrete Kretschmann scalar. Instead, the goal is to test whether local shortest-path anisotropy contains curvature-like information in[...]
 
-## TL;DR
+## Overview
 
 This project tests whether local shortest-path anisotropy can act as a curvature-sensitive observable in graph discretizations of continuum geometries.
 
