@@ -2,13 +2,13 @@
 
 This repository develops a graph-based curvature diagnostic inspired by geodesic shells, shortest-path statistics, and continuum curvature invariants such as the Schwarzschild Kretschmann scalar.
 
-The project began as an exploratory Wolfram Community / Wolfram Summer School idea about a possible Kretschmann-like scalar for hypergraphs. This repository reformulates the idea more cautiously as a **path-anisotropy curvature estimator** and tests it on benchmark graph discretizations of simple geometries.
+The project began as an exploratory Wolfram Community / Wolfram Summer School idea about a possible Kretschmann-like scalar for hypergraphs. This repository reformulates the idea more cautiously as a [...]
 
 ## TL;DR
 
 This project tests whether local shortest-path anisotropy can act as a curvature-sensitive observable in graph discretizations of continuum geometries.
 
-The strongest current result is obtained in a Flamm / Schwarzschild benchmark. For graph radius $r_g = 3$, the rank correlation between the logarithmic path-anisotropy estimator and the Schwarzschild Kretschmann profile improves with graph refinement:
+The strongest current result is obtained in a Flamm / Schwarzschild benchmark. For graph radius $r_g = 3$, the rank correlation between the logarithmic path-anisotropy estimator and the Schwarzsch[...]
 
 |    N | Mean Spearman | Std. Spearman |
 | ---: | ------------: | ------------: |
@@ -52,7 +52,7 @@ $$
 
 or, more explicitly, $N_{\mathrm{geo}}(p,q)$ denotes the number of distinct shortest paths from $p$ to $q$.
 
-The estimator measures how uneven these shortest-path counts are across the shell. The working hypothesis is that curvature leaves a statistical signature in the local geodesic/path structure of a graph.
+The estimator measures how uneven these shortest-path counts are across the shell. The working hypothesis is that curvature leaves a statistical signature in the local geodesic/path structure of a[...]
 
 The current main estimator is the logarithmic cubic-mean-deviation version:
 
@@ -146,25 +146,25 @@ This suggests that radial binning reveals a clearer curvature profile than the r
 
 ## Flat-space control
 
-A basic flat-space control was added to check whether the estimator simply produces a different global distribution in curved and flat graphs. The global distributions of `LogCMD` overlap strongly: the effect size between the flat and Flamm distributions is very small,
+A basic flat-space control was added to check whether the estimator simply produces a different global distribution in curved and flat graphs. The global distributions of `LogCMD` overlap strongly: the Cohen's $d$ effect size is negligible,
 
-[
+$$
 d_{\mathrm{Cohen}} \approx -0.027.
-]
+$$
 
 This indicates that the relevant signal is not a simple global shift in the estimator.
 
 The more meaningful comparison is radial. In the flat benchmark, the radial correlation between binned mean `LogCMD` and radial coordinate is close to zero,
 
-[
+$$
 \mathrm{Corr}(r,C_{\log})_{\mathrm{Flat}} \approx 0.046,
-]
+$$
 
 whereas in the Flamm / Schwarzschild benchmark the radial correlation is strongly negative,
 
-[
+$$
 \mathrm{Corr}(r,C_{\log})_{\mathrm{Flamm}} \approx -0.957.
-]
+$$
 
 This supports the interpretation that the estimator is sensitive to the spatial organization of the curvature profile rather than merely separating flat and curved graphs by their average value.
 
@@ -332,7 +332,7 @@ This project grew out of an earlier Wolfram Community / Wolfram Summer School ex
 * [Original Wolfram Community post: *Kretschmann scalar for hypergraphs*](https://community.wolfram.com/groups/-/m/t/2312929)
 * [Notebook Archive version](https://www.notebookarchive.org/kretschmann-scalar-for-hypergraphs--2021-07-61wg0en/)
 
-The original project asked whether a curvature scalar analogous to the Kretschmann scalar could be defined for hypergraph-based discrete geometries. The present repository reformulates that idea more cautiously as a path-anisotropy curvature diagnostic and adds benchmark tests, seed averaging, graph refinement, and radial binning against the Schwarzschild/Flamm curvature profile.
+The original project asked whether a curvature scalar analogous to the Kretschmann scalar could be defined for hypergraph-based discrete geometries. The present repository reformulates that idea [...]
 
 ## Suggested citation
 
