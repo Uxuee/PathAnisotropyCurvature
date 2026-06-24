@@ -281,12 +281,6 @@ A smoother qualitative visualization using a larger graph shell radius is also p
 
 ![Flamm graph colored by LogCMD, rg5](results/figures/flamm_graph_colored_by_LogCMD_rg5.png)
 
-Hybrid mesh-graph versions are also included:
-
-![Flamm hybrid colored by LogCMD, rg3](results/figures/flamm_hybrid_colored_by_LogCMD_rg3.png)
-
-![Flamm hybrid colored by LogCMD, rg5](results/figures/flamm_hybrid_colored_by_LogCMD_rg5.png)
-
 ## Paraboloid curvature-strength scan
 
 As a secondary benchmark, the repository also tests a paraboloid surface,
