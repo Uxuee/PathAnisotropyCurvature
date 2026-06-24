@@ -308,6 +308,28 @@ Thus, an independent graph-curvature baseline also detects a strong Flamm-specif
 
 This comparison supports the interpretation that the Flamm graph contains robust curvature-sensitive structure, while also showing that (C_{\log}) is complementary to standard graph-curvature measures rather than a replacement for them.
 
+## Ollivier-Ricci baseline comparison
+
+The repository also includes an exploratory Ollivier-Ricci baseline computed using a transport-based graph curvature implementation. As with the Forman-Ricci comparison, edge-level Ollivier-Ricci values were converted to a vertex-level score by averaging the curvatures of incident edges.
+
+For the (N=1000), (k=16) Flamm graph, the binned vertex-level Ollivier-Ricci score gives
+
+$$\mathrm{Corr}(\log K_{\mathrm{Schw}},O) \approx -0.194,$$
+
+and
+
+$$\mathrm{Corr}(r,O)_{\mathrm{Flamm}} \approx 0.364.$$
+
+For the matched-flat control, the corresponding radial correlation is
+
+$$\mathrm{Corr}(r,O)_{\mathrm{MatchedFlat}} \approx 0.455.$$
+
+Thus, in the current graph construction, Ollivier-Ricci curvature does not clearly separate the Flamm / Schwarzschild graph from its matched-flat control. This contrasts with both the path-anisotropy estimator (C_{\log}) and the Forman-Ricci baseline, which show stronger Flamm-specific radial organization.
+
+![Ollivier-Ricci baseline: matched flat vs Flamm](results/figures/ollivier_matched_flat_vs_flamm_N1000.png)
+
+This result is useful as a negative or limiting comparison: it suggests that (C_{\log}) is not merely reproducing a standard transport-based graph curvature, but instead captures a complementary shortest-path anisotropy signal.
+
 
 ## Flamm paraboloid colored by the path-anisotropy estimator
 
