@@ -30,9 +30,33 @@ whereas the Flamm / Schwarzschild benchmark gives
 
 $$\mathrm{Corr}(r,C_{\log})_{\mathrm{Flamm}} = -0.960 \pm 0.015$$
 
-The result also survives changes in the $k$-nearest-neighbor graph construction. Across $k=12,14,16,18,20$, the Flamm / Schwarzschild benchmark remains strongly negatively correlated with radial coordinate.
+The result survives changes in the $k$-nearest-neighbor graph construction. Across $k=12,14,16,18,20$, the Flamm / Schwarzschild benchmark remains strongly negatively correlated with radial coordinate.
 
-Secondary paraboloid and hyperbolic-paraboloid tests are included as sensitivity benchmarks. These show that the estimator is affected by curvature strength, radial sampling, and graph construction.
+The result also survives changes in the graph-shell radius. Across
+
+$$r_g = 2,3,4,5,6,7,$$
+
+with $N=1000$, $k=16$, 12 radial bins, and ten random seeds, the Flamm / Schwarzschild benchmark remains strongly separated from the matched-flat control. The difference
+
+# $$\Delta(r_g)
+
+## \mathrm{Corr}(r,C_{\log})_{\mathrm{Flamm}}
+
+\mathrm{Corr}(r,C_{\log})_{\mathrm{MatchedFlat}}$$
+
+remains between approximately $-1.11$ and $-1.23$ across all tested graph radii. This shows that the Flamm signal is not an artifact of choosing a single graph-shell radius.
+
+A Forman-Ricci baseline was also added. The binned vertex-level Forman-Ricci score detects a strong Flamm-specific radial trend,
+
+$$\mathrm{Corr}(r,F)_{\mathrm{Flamm}} \approx 0.957,$$
+
+while the matched-flat control gives a much weaker trend,
+
+$$\mathrm{Corr}(r,F)_{\mathrm{MatchedFlat}} \approx 0.216.$$
+
+This supports the interpretation that the Flamm graph contains curvature-sensitive radial structure also detected by an independent graph-curvature baseline.
+
+Secondary paraboloid and hyperbolic-paraboloid tests are included as sensitivity benchmarks. These show that the estimator is affected by curvature strength, radial sampling, graph radius, and graph construction.
 
 The current interpretation is that $C_{\log}$ tracks the **spatial organization of curvature-sensitive graph structure** rather than directly reproducing a continuum curvature scalar point by point.
 
@@ -220,6 +244,70 @@ Across all tested values of $k$, the Flamm / Schwarzschild benchmark remains str
 A version with error bars is also provided:
 
 ![k-sensitivity of matched-flat control with errors](results/figures/k_sensitivity_matched_flat_flamm_N1000_errors.png)
+
+## Graph-radius sensitivity
+
+Because the estimator depends explicitly on the graph-shell radius (r_g), we also test whether the Flamm / Schwarzschild signal is specific to one neighborhood size.
+
+For (N=1000), (k=16), 12 radial bins, and ten random seeds, the matched-flat comparison was repeated for
+
+$$r_g = 2,3,4,5,6,7.$$
+
+Across all tested graph radii, the Flamm / Schwarzschild benchmark remains strongly negatively correlated with radial coordinate, while the matched-flat control remains positive or weakly varying.
+
+| (r_g) | Matched-flat mean | Matched-flat std | Flamm mean | Flamm std | Difference mean | Difference std |
+| ----: | ----------------: | ---------------: | ---------: | --------: | --------------: | -------------: |
+|     2 |             0.298 |            0.224 |     -0.931 |     0.029 |          -1.229 |          0.230 |
+|     3 |             0.183 |            0.263 |     -0.959 |     0.018 |          -1.142 |          0.269 |
+|     4 |             0.192 |            0.320 |     -0.959 |     0.015 |          -1.151 |          0.320 |
+|     5 |             0.262 |            0.178 |     -0.943 |     0.027 |          -1.205 |          0.184 |
+|     6 |             0.213 |            0.276 |     -0.900 |     0.035 |          -1.113 |          0.272 |
+|     7 |             0.311 |            0.270 |     -0.872 |     0.063 |          -1.182 |          0.243 |
+
+The separation
+
+# $$\Delta(r_g)
+
+## \mathrm{Corr}(r,C_{\log})_{\mathrm{Flamm}}
+
+\mathrm{Corr}(r,C_{\log})_{\mathrm{MatchedFlat}}$$
+
+remains large and negative for every tested value of (r_g). This shows that the Flamm radial signal is not an artifact of choosing a single graph-shell radius.
+
+![Flamm graph-radius sensitivity, 10 seeds](results/figures/flamm_radius_sensitivity_N1000_10seeds_errors.png)
+
+The direct difference plot shows the robustness of the Flamm / matched-flat separation:
+
+![Flamm minus matched-flat radial correlation, 10 seeds](results/figures/flamm_radius_sensitivity_difference_N1000_10seeds.png)
+
+## Forman-Ricci baseline comparison
+
+As a baseline comparison, the repository also computes a simple unweighted Forman-Ricci curvature on the same graph discretizations. For an unweighted graph, the edge-level Forman curvature is taken as
+
+$$F(u,v)=4-\deg(u)-\deg(v),$$
+
+and a vertex-level score is obtained by averaging (F(u,v)) over the edges incident to each vertex.
+
+This baseline is useful because it checks whether a standard graph-curvature measure also detects the Flamm / Schwarzschild radial structure.
+
+For the (N=1000), (k=16) Flamm graph, the binned vertex-level Forman-Ricci score gives
+
+$$\mathrm{Corr}(\log K_{\mathrm{Schw}},F) \approx -0.902,$$
+
+and
+
+$$\mathrm{Corr}(r,F)_{\mathrm{Flamm}} \approx 0.957.$$
+
+For the matched-flat control, the corresponding radial correlation is much weaker:
+
+$$\mathrm{Corr}(r,F)_{\mathrm{MatchedFlat}} \approx 0.216.$$
+
+Thus, an independent graph-curvature baseline also detects a strong Flamm-specific radial structure. The sign differs from (C_{\log}) because Forman-Ricci and the path-anisotropy estimator measure different graph quantities and use different conventions.
+
+![Forman-Ricci baseline: matched flat vs Flamm](results/figures/forman_matched_flat_vs_flamm_N1000.png)
+
+This comparison supports the interpretation that the Flamm graph contains robust curvature-sensitive structure, while also showing that (C_{\log}) is complementary to standard graph-curvature measures rather than a replacement for them.
+
 
 ## Flamm paraboloid colored by the path-anisotropy estimator
 
@@ -448,10 +536,12 @@ The project currently has the following validation layers:
 | Matched-flat control                              | Done        | Stronger null test with same radial sampling                       |
 | Multi-seed matched-flat control                   | Done        | Flamm signal stable; matched-flat signal variable                  |
 | k-sensitivity                                     | Done        | Flamm signal persists across tested $k$ values                     |
+| Graph-radius sensitivity                          | Done        | Flamm/matched-flat separation persists across $r_g=2,\dots,7$      |
 | Flamm estimator-colored graph                     | Done        | Visualizes the local $C_{\log}$ field on the main benchmark        |
+| Forman-Ricci baseline                             | Done        | Independent graph-curvature baseline detects Flamm radial structure |
 | Paraboloid curvature-strength scan                | Done        | Shows curvature-strength sensitivity and graph/sampling dependence |
 | Hyperbolic paraboloid benchmark                   | In progress | Tests response to negative curvature                               |
-| Comparison with existing graph curvature measures | Planned     | Needed for a stronger paper version                                |
+| Ollivier-Ricci comparison                         | In progress | Transport-based graph-curvature baseline                           |
 
 ## Research status
 
@@ -491,7 +581,8 @@ This project is exploratory. The main current limitations are:
 * Compare graph radii and neighborhood sizes.
 * Compare k-nearest-neighbor graphs with distance-cutoff graphs.
 * Add convergence figures with error bars.
-* Compare with Ollivier-Ricci, Forman-Ricci, causal-set scalar curvature, and Wolfram-model curvature constructions.
+* Finish the Ollivier-Ricci comparison.
+* Compare the path-anisotropy estimator with Forman-Ricci and Ollivier-Ricci baselines in the paper.
 * Extend from graph benchmarks to hypergraph evolution data.
 * Prepare a short arXiv-style technical note.
 
