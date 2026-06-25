@@ -41,6 +41,8 @@ Given a graph $G=(V,E)$, a center vertex $p$, and a graph-distance radius $r_g$,
 
 $$S_{r_g}(p) = \{q\in V \mid d_G(p,q)=r_g\}.$$
 
+![Graph-distance shell](results/figures/shell.png)
+
 For each shell vertex $q$, count the number of shortest paths from $p$ to $q$:
 
 $$N_{\mathrm{geo}}(p,q).$$
@@ -64,6 +66,8 @@ The repository includes graph discretizations of several benchmark geometries:
 - Hayward regular black-hole spatial slices,
 - paraboloid and hyperbolic-paraboloid surfaces,
 - exploratory sphere and hyperbolic-disk tests.
+
+![Benchmark geometries](results/figures/benchmark_geometries.png)
 
 The main black-hole comparison uses static, spherically symmetric metrics of the form
 
@@ -99,6 +103,8 @@ A binned radial comparison of $C_{\log}$ across Schwarzschild/Flamm, Reissner–
 results/figures/black_hole_family_radial_profile_plot.pdf
 ```
 
+![Cross-family radial profile](results/figures/black_hole_family_radial_profile_plot.png)
+
 The radial profiles show a common radial organization across all four black-hole graph geometries, with small model-dependent deviations.
 
 ### 2. Three-dimensional binned visualization
@@ -108,6 +114,8 @@ A qualitative 3D graph visualization colored by radially binned mean $C_{\log}$.
 ```text
 results/figures/black_hole_family_colored_by_binned_LogCMD_blue_red.pdf
 ```
+
+![Three-dimensional binned visualization](results/figures/black_hole_family_colored_by_binned_LogCMD_blue_red.png)
 
 ### 3. Cross-family summary table
 
@@ -148,6 +156,8 @@ $$\mathrm{Corr}(r,C_{\log})_{\mathrm{MatchedFlat}}=0.183\pm0.263.$$
 
 Thus, within the calibrated scan protocol, the Flamm graph shows a strong radial organization that is not reproduced by the matched-flat control.
 
+![Schwarzschild/Flamm vs matched-flat radial profile](results/figures/matched_flat_vs_flamm_radial_logcmd_N1000.png)
+
 ### Reissner–Nordström charge scan
 
 For Reissner–Nordström geometries with $M=1/2$ and charges $Q=0,0.1,0.2,0.3,0.4$, the radial organization remains stable over ten random seeds.
@@ -159,6 +169,8 @@ For Reissner–Nordström geometries with $M=1/2$ and charges $Q=0,0.1,0.2,0.3,0
 | 0.2 | $-0.966\pm0.016$ | $0.916\pm0.032$ | $0.183\pm0.263$ | $-1.149\pm0.268$ |
 | 0.3 | $-0.974\pm0.010$ | $0.931\pm0.022$ | $0.183\pm0.263$ | $-1.157\pm0.265$ |
 | 0.4 | $-0.978\pm0.008$ | $0.944\pm0.020$ | $0.183\pm0.263$ | $-1.161\pm0.265$ |
+
+![Reissner–Nordström charge scan](results/figures/rn_charge_scan_10seeds_original_control.png)
 
 ### Bardeen and Hayward scans
 
@@ -173,6 +185,8 @@ Bardeen scan:
 | 0.2 | $-0.967\pm0.016$ | $0.920\pm0.031$ | $0.183\pm0.263$ | $-1.150\pm0.269$ |
 | 0.3 | $-0.975\pm0.009$ | $0.938\pm0.021$ | $0.183\pm0.263$ | $-1.158\pm0.265$ |
 
+![Bardeen parameter scan](results/figures/bardeen_parameter_scan_10seeds_original_control.png)
+
 Hayward scan:
 
 | $\ell$ | Corr$(r,C_{\log})$ | Corr$(\log K,C_{\log})$ | Corr$(r,C_{\log})_{\mathrm{flat}}$ | Difference |
@@ -181,6 +195,8 @@ Hayward scan:
 | 0.1 | $-0.961\pm0.017$ | $0.906\pm0.032$ | $0.183\pm0.263$ | $-1.144\pm0.268$ |
 | 0.2 | $-0.965\pm0.015$ | $0.916\pm0.028$ | $0.183\pm0.263$ | $-1.148\pm0.266$ |
 | 0.3 | $-0.969\pm0.013$ | $0.929\pm0.025$ | $0.183\pm0.263$ | $-1.152\pm0.266$ |
+
+![Hayward parameter scan](results/figures/hayward_parameter_scan_10seeds_original_control.png)
 
 ## Controls and baselines
 
@@ -211,6 +227,8 @@ For $N=1000$, $k=16$, 12 radial bins, and ten random seeds, the Flamm/matched-fl
 | 6 | 0.213 | 0.276 | -0.900 | 0.035 | -1.113 | 0.272 |
 | 7 | 0.311 | 0.270 | -0.872 | 0.063 | -1.182 | 0.243 |
 
+![Graph-radius sensitivity](results/figures/flamm_radius_sensitivity_N1000_10seeds_errors.png)
+
 ### Forman-Ricci baseline
 
 A simple unweighted Forman-Ricci curvature baseline is computed on the same graph discretizations. For an unweighted graph, the edge-level Forman curvature is
@@ -229,6 +247,8 @@ $$\mathrm{Corr}(r,F)_{\mathrm{MatchedFlat}}\approx0.216.$$
 
 This supports the interpretation that the Flamm graph contains curvature-sensitive radial structure also detected by an independent graph-curvature baseline, although with a different sign and scale factor.
 
+![Forman-Ricci baseline](results/figures/forman_matched_flat_vs_flamm_N1000.png)
+
 ### Ollivier-Ricci baseline
 
 An exploratory Ollivier-Ricci baseline is also included. In the current graph construction, this transport-based curvature baseline does not clearly separate the Schwarzschild/Flamm graph from the matched-flat control:
@@ -240,6 +260,8 @@ and
 $$\mathrm{Corr}(r,\kappa_{\mathrm{OR}})_{\mathrm{MatchedFlat}}\approx0.455.$$
 
 This result is useful as a limiting comparison. It suggests that $C_{\log}$ is not merely reproducing a standard transport-based graph curvature, but instead captures a complementary path-multiplicity signature.
+
+![Ollivier-Ricci baseline](results/figures/ollivier_matched_flat_vs_flamm_N1000.png)
 
 ## Additional benchmark surfaces
 
@@ -257,6 +279,8 @@ $$K_G(r)=\frac{4a^2}{(1+4a^2r^2)^2}.$$
 
 This benchmark is useful because the curvature strength can be controlled directly through $a$. Unlike the Schwarzschild/Flamm benchmark, the matched-flat control can also show a strong radial trend for certain graph construction parameters, highlighting the graph-construction dependence of the diagnostic.
 
+![Paraboloid curvature-strength scan](results/figures/paraboloid_curvature_strength_scan_N1000.png)
+
 ### Hyperbolic paraboloid
 
 The hyperbolic paraboloid benchmark is
@@ -268,6 +292,8 @@ with Gaussian curvature
 $$K_G(x,y)=\frac{-4a^2}{(1+4a^2(x^2+y^2))^2}.$$
 
 Because this curvature is negative, comparisons using logarithms are made with $\log |K_G|$. This benchmark tests the graph-construction dependence of the estimator beyond the Flamm/Schwarzschild calibration baseline.
+
+![Hyperbolic paraboloid curvature-strength scan](results/figures/hyperbolic_paraboloid_curvature_strength_scan_N1000.png)
 
 ## Repository structure
 
