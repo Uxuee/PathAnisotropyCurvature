@@ -95,6 +95,8 @@ binnedFlammComparison::usage = "binnedFlammComparison[data, res, estimator, nbin
 radialBinComparisonFast2::usage = "radialBinComparisonFast2[data, res, estimator, nbins] bins generic results radially using cleaned rows.";
 radialBinComparisonNoClean::usage = "radialBinComparisonNoClean[data, res, estimator, nbins] bins generic results radially without requiring TargetK.";
 corrFromBinned::usage = "corrFromBinned[binned] computes Corr(rMean, EstimatorMean).";
+curvatureScoreBins::usage = "curvatureScoreBins[binned] adds CurvatureScoreMean = -EstimatorMean, i.e. the reporting convention C_curv = -C_log.";
+canonicalCurvatureBinnedCorrelations::usage = "canonicalCurvatureBinnedCorrelations[binned] computes Corr(rMean, C_curv) and Corr(Log[KMean], C_curv), with C_curv = -C_log.";
 commonRadialBinnedComparison::usage = "commonRadialBinnedComparison[data1,res1,data2,res2,estimator,nbins] bins two datasets on the same overlapping radial domain.";
 plotCommonRadialProfiles::usage = "plotCommonRadialProfiles[commonBinned,label1,label2,title,file] plots common-bin radial profiles and optionally exports them.";
 matchedFlatFlammSeedScan::usage = "matchedFlatFlammSeedScan[n, seeds, k, radius, nbins] compares matched-flat and Flamm radial trends across seeds.";
@@ -802,7 +804,7 @@ makeBlackHoleFamilyPanel[pairs_, labels_, range_: Automatic, colorFunction_: red
 (* Radial binning and scans                                          *)
 (* ================================================================ *)
 
-ClearAll[assignRadialBins, radialBinComparisonNoClean, radialBinComparisonFast2, binnedFlammComparison, corrFromBinned];
+ClearAll[assignRadialBins, radialBinComparisonNoClean, radialBinComparisonFast2, binnedFlammComparison, corrFromBinned, curvatureScoreBins, canonicalCurvatureBinnedCorrelations];
 
 assignRadialBins[rows_List, nbins_Integer?Positive] :=
  Module[{rmin, rmax},
@@ -858,6 +860,85 @@ binnedFlammComparison[data_, res_, estimator_: "LogCMD", nbins_Integer?Positive]
  ];
 
 corrFromBinned[binned_List] := safeCorrelation[Lookup[binned, "rMean"], Lookup[binned, "EstimatorMean"]];
+
+(*
+  Reporting-level curvature-oriented convention.
+
+  LogCMD remains the raw estimator C_log.  For the black-hole-family
+  summary table, it is clearer to report
+
+      C_curv = - C_log
+
+  so that larger C_curv corresponds to a stronger inward curvature signal
+  under the fixed graph-construction protocol.  This does not modify the
+  estimator; it only adds a signed reporting column to binned summaries.
+*)
+
+curvatureScoreBins[binned_List] :=
+ Map[
+  Function[row,
+   If[
+    AssociationQ[row] && KeyExistsQ[row, "EstimatorMean"] && validRealNumberQ[row["EstimatorMean"]],
+    Join[row, <|"CurvatureScoreMean" -> -N[row["EstimatorMean"]]|>],
+    row
+    ]
+   ],
+  binned
+  ];
+
+canonicalCurvatureBinnedCorrelations[binned_List] :=
+ Module[{scoredBins, goodBins, rvals, cvals, kvals, corrR, corrK},
+
+  scoredBins = curvatureScoreBins[binned];
+
+  goodBins =
+   SortBy[
+    Select[
+     scoredBins,
+     AssociationQ[#] &&
+       KeyExistsQ[#, "rMean"] &&
+       KeyExistsQ[#, "CurvatureScoreMean"] &&
+       validRealNumberQ[#["rMean"]] &&
+       validRealNumberQ[#["CurvatureScoreMean"]] &
+     ],
+    #["rMean"] &
+    ];
+
+  If[Length[goodBins] < 3,
+   Return[
+    <|
+     "Convention" -> "Ccurv = -C_log; rMean increases outward",
+     "BinsUsed" -> Length[goodBins],
+     "CorrR_Ccurv" -> Missing["InsufficientData"],
+     "CorrLogK_Ccurv" -> Missing["InsufficientData"]
+     |>
+    ]
+   ];
+
+  rvals = N @ Lookup[goodBins, "rMean"];
+  cvals = N @ Lookup[goodBins, "CurvatureScoreMean"];
+  corrR = N @ safeCorrelation[rvals, cvals];
+
+  corrK =
+   If[
+    AllTrue[
+     goodBins,
+     KeyExistsQ[#, "KMean"] &&
+       validRealNumberQ[#["KMean"]] &&
+       #["KMean"] > 0 &
+     ],
+    kvals = N @ Lookup[goodBins, "KMean"];
+    N @ safeCorrelation[Log[kvals], cvals],
+    Missing["NoPositiveKMean"]
+    ];
+
+  <|
+   "Convention" -> "Ccurv = -C_log; rMean increases outward",
+   "BinsUsed" -> Length[goodBins],
+   "CorrR_Ccurv" -> corrR,
+   "CorrLogK_Ccurv" -> corrK
+   |>
+  ];
 
 ClearAll[rowsWithRAndEstimator, commonRadialBinnedComparison, plotCommonRadialProfiles];
 
@@ -959,7 +1040,7 @@ ClearAll[runBHWithOriginalControl, runRNOriginalControl, scanRNOriginalControl, 
 Options[runBHWithOriginalControl] = {"UseBaseForCurved" -> False};
 
 runBHWithOriginalControl[label_, f_, targetK_, seed_: 1234, n_: 1000, samplingMass_: 1/2, k_: 16, rg_: 3, nbins_: 12, OptionsPattern[]] :=
- Module[{base, curved, flat, resCurved, resFlat, bCurved, bFlat, corrCurved, corrFlat, corrLogK},
+ Module[{base, curved, flat, resCurved, resFlat, bCurved, bFlat, bCurvedCcurv, bFlatCcurv, statsCurved, statsFlat, corrCurved, corrFlat, corrLogK},
   SeedRandom[seed];
   base = buildFlammDataset[n, samplingMass, k];
 
@@ -983,10 +1064,42 @@ runBHWithOriginalControl[label_, f_, targetK_, seed_: 1234, n_: 1000, samplingMa
   resFlat = evaluateDataset[flat, rg];
   bCurved = binnedFlammComparison[curved, resCurved, "LogCMD", nbins];
   bFlat = radialBinComparisonNoClean[flat, resFlat, "LogCMD", nbins];
-  corrCurved = corrFromBinned[bCurved];
-  corrFlat = corrFromBinned[bFlat];
-  corrLogK = safeCorrelation[Log[Lookup[bCurved, "KMean"]], Lookup[bCurved, "EstimatorMean"]];
-  <|"Label" -> label, "Seed" -> seed, "N" -> n, "k" -> k, "Radius" -> rg, "Bins" -> nbins, "Curved" -> curved, "Flat" -> flat, "CurvedResult" -> resCurved, "FlatResult" -> resFlat, "CurvedBinned" -> bCurved, "FlatBinned" -> bFlat, "CorrRLogCMD" -> N[corrCurved], "CorrLogKLogCMD" -> N[corrLogK], "MatchedFlatCorrRLogCMD" -> N[corrFlat], "Difference" -> N[corrCurved - corrFlat]|>
+
+  (*
+    Journal/reporting convention:
+      C_curv = - C_log.
+    The raw LogCMD estimator is not changed.  We only use the signed
+    CurvatureScoreMean column for the BH-family summary correlations.
+  *)
+  bCurvedCcurv = curvatureScoreBins[bCurved];
+  bFlatCcurv = curvatureScoreBins[bFlat];
+  statsCurved = canonicalCurvatureBinnedCorrelations[bCurved];
+  statsFlat = canonicalCurvatureBinnedCorrelations[bFlat];
+  corrCurved = statsCurved["CorrR_Ccurv"];
+  corrFlat = statsFlat["CorrR_Ccurv"];
+  corrLogK = statsCurved["CorrLogK_Ccurv"];
+
+  <|
+   "Label" -> label,
+   "Seed" -> seed,
+   "N" -> n,
+   "k" -> k,
+   "Radius" -> rg,
+   "Bins" -> nbins,
+   "CcurvDefinition" -> "Ccurv = -C_log",
+   "Curved" -> curved,
+   "Flat" -> flat,
+   "CurvedResult" -> resCurved,
+   "FlatResult" -> resFlat,
+   "CurvedBinned" -> bCurved,
+   "FlatBinned" -> bFlat,
+   "CurvedBinnedCcurv" -> bCurvedCcurv,
+   "FlatBinnedCcurv" -> bFlatCcurv,
+   "CorrR_Ccurv" -> N[corrCurved],
+   "CorrLogK_Ccurv" -> N[corrLogK],
+   "MatchedFlatCorrR_Ccurv" -> N[corrFlat],
+   "Difference_Ccurv" -> N[corrCurved - corrFlat]
+   |>
  ];
 
 runRNOriginalControl[Q_, seed_: 1234, n_: 1000, M_: 1/2, samplingMass_: 1/2, k_: 16, rg_: 3, nbins_: 12] :=
@@ -1002,7 +1115,7 @@ runRNOriginalControl[Q_, seed_: 1234, n_: 1000, M_: 1/2, samplingMass_: 1/2, k_:
  ];
 
 scanRNOriginalControl[Qs_List, seeds_List, n_: 1000, M_: 1/2, samplingMass_: 1/2, k_: 16, rg_: 3, nbins_: 12] :=
- Flatten[Table[KeyDrop[runRNOriginalControl[Q, seed, n, M, samplingMass, k, rg, nbins], {"Curved", "Flat", "CurvedResult", "FlatResult", "CurvedBinned", "FlatBinned"}], {Q, Qs}, {seed, seeds}], 1];
+ Flatten[Table[KeyDrop[runRNOriginalControl[Q, seed, n, M, samplingMass, k, rg, nbins], {"Curved", "Flat", "CurvedResult", "FlatResult", "CurvedBinned", "FlatBinned", "CurvedBinnedCcurv", "FlatBinnedCcurv"}], {Q, Qs}, {seed, seeds}], 1];
 
 scanBardeenOriginalControl[gs_List, seeds_List, n_: 1000, M_: 1/2, samplingMass_: 1/2, k_: 16, rg_: 3, nbins_: 12] :=
  Flatten[
@@ -1015,7 +1128,7 @@ scanBardeenOriginalControl[gs_List, seeds_List, n_: 1000, M_: 1/2, samplingMass_
        seed, n, samplingMass, k, rg, nbins,
        "UseBaseForCurved" -> TrueQ[Chop[N[g]] == 0]
      ]},
-    Join[<|"g" -> g|>, KeyDrop[out, {"Curved", "Flat", "CurvedResult", "FlatResult", "CurvedBinned", "FlatBinned"}]]
+    Join[<|"g" -> g|>, KeyDrop[out, {"Curved", "Flat", "CurvedResult", "FlatResult", "CurvedBinned", "FlatBinned", "CurvedBinnedCcurv", "FlatBinnedCcurv"}]]
    ],
    {g, gs}, {seed, seeds}
   ],
@@ -1033,7 +1146,7 @@ scanHaywardOriginalControl[ells_List, seeds_List, n_: 1000, M_: 1/2, samplingMas
        seed, n, samplingMass, k, rg, nbins,
        "UseBaseForCurved" -> TrueQ[Chop[N[ell]] == 0]
      ]},
-    Join[<|"ell" -> ell|>, KeyDrop[out, {"Curved", "Flat", "CurvedResult", "FlatResult", "CurvedBinned", "FlatBinned"}]]
+    Join[<|"ell" -> ell|>, KeyDrop[out, {"Curved", "Flat", "CurvedResult", "FlatResult", "CurvedBinned", "FlatBinned", "CurvedBinnedCcurv", "FlatBinnedCcurv"}]]
    ],
    {ell, ells}, {seed, seeds}
   ],
@@ -1043,7 +1156,26 @@ scanHaywardOriginalControl[ells_List, seeds_List, n_: 1000, M_: 1/2, samplingMas
 summarizeBHScan[rows_List, parameterKey_String] :=
  Module[{groups},
   groups = GroupBy[rows, #[parameterKey] &];
-  Dataset[KeyValueMap[Function[{par, vals}, <|parameterKey -> par, "CorrRLogCMDMean" -> Mean[Lookup[vals, "CorrRLogCMD"]], "CorrRLogCMDStd" -> safeStd[Lookup[vals, "CorrRLogCMD"]], "CorrLogKLogCMDMean" -> Mean[Lookup[vals, "CorrLogKLogCMD"]], "CorrLogKLogCMDStd" -> safeStd[Lookup[vals, "CorrLogKLogCMD"]], "MatchedFlatCorrMean" -> Mean[Lookup[vals, "MatchedFlatCorrRLogCMD"]], "MatchedFlatCorrStd" -> safeStd[Lookup[vals, "MatchedFlatCorrRLogCMD"]], "DifferenceMean" -> Mean[Lookup[vals, "Difference"]], "DifferenceStd" -> safeStd[Lookup[vals, "Difference"]], "Seeds" -> Length[vals]|>], groups]]
+  Dataset[
+   KeyValueMap[
+    Function[{par, vals},
+     <|
+      parameterKey -> par,
+      "CcurvDefinition" -> "Ccurv = -C_log",
+      "CorrR_CcurvMean" -> Mean[Select[Lookup[vals, "CorrR_Ccurv"], validRealNumberQ]],
+      "CorrR_CcurvStd" -> safeStd[Lookup[vals, "CorrR_Ccurv"]],
+      "CorrLogK_CcurvMean" -> Mean[Select[Lookup[vals, "CorrLogK_Ccurv"], validRealNumberQ]],
+      "CorrLogK_CcurvStd" -> safeStd[Lookup[vals, "CorrLogK_Ccurv"]],
+      "MatchedFlatCorrR_CcurvMean" -> Mean[Select[Lookup[vals, "MatchedFlatCorrR_Ccurv"], validRealNumberQ]],
+      "MatchedFlatCorrR_CcurvStd" -> safeStd[Lookup[vals, "MatchedFlatCorrR_Ccurv"]],
+      "Difference_CcurvMean" -> Mean[Select[Lookup[vals, "Difference_Ccurv"], validRealNumberQ]],
+      "Difference_CcurvStd" -> safeStd[Lookup[vals, "Difference_Ccurv"]],
+      "Seeds" -> Length[vals]
+      |>
+     ],
+    groups
+    ]
+   ]
  ];
 
 (* ================================================================ *)
