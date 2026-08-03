@@ -78,14 +78,18 @@ absPlot = ListLinePlot[absSeries, Frame -> True,
    FrameLabel -> {"Protocol", "|Delta rho_r|"},
    FrameTicks -> {{Automatic, None}, {Thread[{Range[5], shortLabels}], None}},
    PlotMarkers -> Automatic, PlotLegends -> Placed[seedLegends, Right],
-   PlotRange -> All, GridLines -> {None, Automatic}, ImageSize -> 800,
+   PlotRange -> All, GridLines -> {None, Automatic},
+   GridLinesStyle -> Directive[GrayLevel[0.65], Opacity[0.32], AbsoluteThickness[0.6]],
+   Method -> {"GridLinesInFront" -> False}, ImageSize -> 800,
    PlotLabel -> "Paired construction sensitivity across ten seeds"];
 
 signedPlot = ListLinePlot[signedSeries, Frame -> True,
    FrameLabel -> {"Protocol", "Signed Delta rho_r"},
    FrameTicks -> {{Automatic, None}, {Thread[{Range[5], shortLabels}], None}},
    PlotMarkers -> Automatic, PlotLegends -> Placed[seedLegends, Right],
-   PlotRange -> All, GridLines -> {None, {0}}, ImageSize -> 800,
+   PlotRange -> All, GridLines -> {None, Automatic},
+   GridLinesStyle -> Directive[GrayLevel[0.65], Opacity[0.32], AbsoluteThickness[0.6]],
+   Method -> {"GridLinesInFront" -> False}, ImageSize -> 800,
    PlotLabel -> "Signed radial-correlation gap across ten paired seeds"];
 
 Export[FileNameJoin[{outDir, "paired_abs_delta_by_seed.pdf"}], absPlot];

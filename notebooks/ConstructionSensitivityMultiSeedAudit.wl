@@ -850,6 +850,9 @@ auditPlot[summaryRows_List] :=
      {Thread[{Range[Length[labels]], labels}], None}
      },
    PlotRange -> All,
+   GridLines -> {None, Automatic},
+   GridLinesStyle -> Directive[GrayLevel[0.65], Opacity[0.32], AbsoluteThickness[0.6]],
+   Method -> {"GridLinesInFront" -> False},
    PlotMarkers -> Automatic,
    IntervalMarkers -> "Bars",
    ImageSize -> Large,
