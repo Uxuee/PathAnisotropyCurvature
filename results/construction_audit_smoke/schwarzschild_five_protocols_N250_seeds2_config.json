@@ -1,0 +1,20 @@
+{
+	"N":250,
+	"k":16,
+	"M":0.5,
+	"GraphShellRadius":3,
+	"Bins":12,
+	"Seeds":[
+		1,
+		2
+	],
+	"Protocols":[
+		"Original matched-flat KNN",
+		"Strict radius",
+		"Pure KNN",
+		"Mutual KNN",
+		"Edge-matched radius"
+	],
+	"MinimumCommonBins":3,
+	"OutputDirectory":"C:\\Users\\palom\\Documents\\graphs\\results\\construction_audit_smoke"
+}

@@ -1,0 +1,17 @@
+{
+	"RowCount":10,
+	"ExpectedRowCount":10,
+	"AllProtocolsPresentPerSeed":true,
+	"ProtocolCountsCorrect":true,
+	"SeedCountsCorrect":true,
+	"AllCommonBinsRequested":true,
+	"AllCorrelationsNumericOrJustifiedMissing":true,
+	"MissingCorrelationCount":0,
+	"MutualSubsetChecksPassed":true,
+	"MaxXYMismatch":1.7763568394002505e-15,
+	"AllXYWithinTolerance":true,
+	"ConnectivityFieldsPresent":true,
+	"ValidFractionFieldsPresent":true,
+	"EdgeMatchesExactOrTieExplained":true,
+	"RawCSVHeaderExplicit":true
+}
