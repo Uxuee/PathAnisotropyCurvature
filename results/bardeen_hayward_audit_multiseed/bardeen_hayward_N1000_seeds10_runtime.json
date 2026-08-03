@@ -1,0 +1,7 @@
+{
+	"CheckpointUnits":100,
+	"TotalCheckpointComputeSeconds":2.7701315375500002e4,
+	"MeanCheckpointSeconds":2.77013153755e2,
+	"MinimumCheckpointSeconds":1.165302261e2,
+	"MaximumCheckpointSeconds":1.0998880857e3
+}

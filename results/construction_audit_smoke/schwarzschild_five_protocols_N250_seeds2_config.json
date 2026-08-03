@@ -16,5 +16,5 @@
 		"Edge-matched radius"
 	],
 	"MinimumCommonBins":3,
-	"OutputDirectory":"C:\\Users\\palom\\Documents\\graphs\\results\\construction_audit_smoke"
+	"OutputDirectory":"results\\construction_audit_smoke"
 }

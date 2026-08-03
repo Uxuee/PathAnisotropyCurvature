@@ -850,6 +850,7 @@ auditPlot[summaryRows_List] :=
      {Thread[{Range[Length[labels]], labels}], None}
      },
    PlotRange -> All,
+   GridLines -> None,
    PlotMarkers -> Automatic,
    IntervalMarkers -> "Bars",
    ImageSize -> Large,

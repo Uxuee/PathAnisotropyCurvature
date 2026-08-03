@@ -13,14 +13,13 @@ fail[msg_String, code_Integer : 2] := (Print["ERROR: ", msg]; Exit[code]);
 require[q_, msg_String] := If[! TrueQ[q], fail[msg]];
 
 canonicalFamilies = <|
-  "RN" -> {0., 0.1, 0.2, 0.3, 0.4},
   "Bardeen" -> {0., 0.1, 0.2, 0.3},
   "Hayward" -> {0., 0.1, 0.2, 0.3}|>;
-anchorParameters = <|"RN" -> 0.4, "Bardeen" -> 0.2, "Hayward" -> 0.2|>;
-familyParameterName = <|"RN" -> "Q", "Bardeen" -> "g", "Hayward" -> "ell"|>;
+anchorParameters = <|"Bardeen" -> 0.2, "Hayward" -> 0.2|>;
+familyParameterName = <|"Bardeen" -> "g", "Hayward" -> "ell"|>;
 
 baseConfig[n_, seeds_, output_] := <|
-  "AuditVersion" -> "2026-08-broader-family-canonical-v2",
+  "AuditVersion" -> "2026-08-bardeen-hayward-canonical-v3",
   "N" -> n, "M" -> 1/2, "k" -> 16, "GraphShellRadius" -> 3,
   "Bins" -> 12, "MinimumCommonBins" -> If[n < 1000, 3, 6],
   "Seeds" -> seeds, "Protocols" -> protocolOrder,
@@ -79,7 +78,9 @@ familyCorrelations[bh_, bhRes_, flat_, flatRes_, targetK_, cfg_] :=
   spearRbh = spearmanCorrelation[r, bhMean];
   spearRflat = spearmanCorrelation[r, flatMean];
   spearK = spearmanCorrelation[logK, bhMean];
-  <|"CommonBins" -> Length[common], "RhoBH" -> pearsonRbh,
+  <|"CommonBins" -> Length[common],
+   "CommonProfileHash" -> Hash[N@Lookup[common, {"rMean", "EstimatorMean1", "EstimatorMean2"}], "SHA256"],
+   "RhoBH" -> pearsonRbh,
    "RhoFlat" -> pearsonRflat,
    "DeltaRho" -> If[finiteNumericQ[pearsonRbh] && finiteNumericQ[pearsonRflat], N[pearsonRbh - pearsonRflat], Missing["InvalidCorrelation"]],
    "AbsDeltaRho" -> If[finiteNumericQ[pearsonRbh] && finiteNumericQ[pearsonRflat], N@Abs[pearsonRbh - pearsonRflat], Missing["InvalidCorrelation"]],
@@ -87,11 +88,13 @@ familyCorrelations[bh_, bhRes_, flat_, flatRes_, targetK_, cfg_] :=
    "SpearmanRhoFlat" -> spearRflat, "SpearmanBHLogK" -> spearK|>];
 
 familyRow[family_, value_, seed_, protocol_, bh_, flat_, bhRes_, flatRes_, cfg_, checkpoint_] :=
- Module[{qbh, qflat, corr, funcs, edgeDiag},
+ Module[{qbh, qflat, corr, funcs, edgeDiag, radiusBH, radiusFlat},
   qbh = graphQuality[bh["Graph"]]; qflat = graphQuality[flat["Graph"]];
   funcs = targetFunctions[family, value, cfg["M"]];
   corr = familyCorrelations[bh, bhRes, flat, flatRes, funcs[[2]], cfg];
   edgeDiag = Lookup[flat, "EdgeMatchDiagnostics", <||>];
+  radiusBH = assocLookupAny[bh, {"AuditEpsilon", "Epsilon", "eps"}, Missing["NotRadiusGraphOrUnavailable"]];
+  radiusFlat = assocLookupAny[flat, {"AuditEpsilon", "Epsilon", "eps"}, Missing["NotRadiusGraphOrUnavailable"]];
   Join[<|
     "AuditVersion" -> cfg["AuditVersion"], "Family" -> family,
     "ParameterName" -> familyParameterName[family], "ParameterValue" -> N[value],
@@ -105,11 +108,15 @@ familyRow[family_, value_, seed_, protocol_, bh_, flat_, bhRes_, flatRes_, cfg_,
     "FlatLargestComponentFraction" -> qflat["LargestComponentFraction"],
     "BHValidLogCMDFraction" -> validEstimatorFraction[bhRes],
     "FlatValidLogCMDFraction" -> validEstimatorFraction[flatRes],
+    "BHRadius" -> radiusBH, "FlatRadius" -> radiusFlat,
     "BHVertexCount" -> qbh["VertexCount"], "FlatVertexCount" -> qflat["VertexCount"],
     "EdgeCountDifference" -> qflat["EdgeCount"] - qbh["EdgeCount"],
     "FlatEdgesTiedAtRadius" -> Lookup[edgeDiag, "EdgesTiedAtRadius", Missing["NotEdgeMatchedRadius"]],
     "XYMismatch" -> maximumXYMismatch[bh, flat],
-    "SourceCheckpoint" -> checkpoint|>]];
+    "SampleXYHash" -> Hash[N@Lookup[bh, "Points"][[All, 1 ;; 2]], "SHA256"],
+    "SourceRunner" -> "scripts/run_broader_family_audit.wls",
+    "SourceCheckpoint" -> checkpoint,
+    "RuntimeSeconds" -> Missing["AssignedAfterUnitCompletion"]|>]];
 
 runUnit[kind_String, family_String, value_?NumericQ, seed_Integer, cfg_Association, checkpoint_String] :=
  Module[{bh, pairs, protocols, qc, cache = <||>, eval, rows},
@@ -140,6 +147,7 @@ validCheckpointQ[x_, kind_, family_, value_, seed_, cfg_] := AssociationQ[x] &&
  Length[Lookup[x, "Rows", {}]] === If[kind === "scan", 1, 5] &&
  AllTrue[Lookup[x, "Rows", {}], Lookup[#, "N", None] === cfg["N"] &&
    Lookup[#, "AuditVersion", None] === cfg["AuditVersion"] &&
+   finiteNumericQ[Lookup[#, "RuntimeSeconds", Missing[]]] &&
    AllTrue[Lookup[#, {"SpearmanRhoBH", "SpearmanRhoFlat", "SpearmanBHLogK"}],
     finiteNumericQ[#] || MissingQ[#] &] &];
 
@@ -149,7 +157,9 @@ runResumable[kind_, specs_List, seeds_List, cfg_] := Module[{runs = {}, path, ol
   If[validCheckpointQ[old, kind, family, value, seed, cfg], AppendTo[runs, old]; Print["Skipping ", path],
    If[! DirectoryQ[DirectoryName[path]], CreateDirectory[DirectoryName[path], CreateIntermediateDirectories -> True]];
    {elapsed, out} = AbsoluteTiming[runUnit[kind, family, value, seed, cfg, path]];
-   out = Join[out, <|"ElapsedSeconds" -> elapsed|>]; tmp = path <> ".tmp";
+   out = Join[out, <|"ElapsedSeconds" -> elapsed|>];
+   AssociateTo[out, "Rows" -> (Append[#, "RuntimeSeconds" -> elapsed] & /@ out["Rows"])];
+   tmp = path <> ".tmp";
    require[Export[tmp, out, "MX"] =!= $Failed, "Checkpoint export failed."];
    If[FileExistsQ[path], DeleteFile[path]]; RenameFile[tmp, path]; AppendTo[runs, out];
    Print["Completed ", kind, " ", family, " ", value, " seed ", seed, " in ", N[elapsed], " s"]],
@@ -205,8 +215,9 @@ zeroLimitValidation[scanRows_List, cfg_Association] := Module[
    "BHLargestComponentFraction", "FlatLargestComponentFraction",
    "BHValidLogCMDFraction", "FlatValidLogCMDFraction", "CommonBins", "XYMismatch"};
  grouped = GroupBy[zeroRows, Lookup[#, "Seed"] &];
- internal = Length[zeroRows] === 3 Length[cfg["Seeds"]] && AllTrue[Values[grouped],
-   Function[g, Length[g] === 3 && AllTrue[Rest[g],
+ internal = Length[zeroRows] === Length[canonicalFamilies] Length[cfg["Seeds"]] && AllTrue[Values[grouped],
+   Function[g, Length[g] === Length[canonicalFamilies] &&
+    SameQ @@ Lookup[g, {"SampleXYHash", "CommonProfileHash"}] && AllTrue[Rest[g],
      Max[Abs[N[Lookup[#, fields]] - N[Lookup[First[g], fields]]]] <= 10^-12 &]]];
  referencePath = If[cfg["N"] === 250,
    FileNameJoin[{repoRoot, "results", "construction_audit_smoke", "schwarzschild_five_protocols_N250_seeds2_raw.csv"}],
@@ -222,7 +233,8 @@ zeroLimitValidation[scanRows_List, cfg_Association] := Module[
    {family, Keys[canonicalFamilies]}, {seed, cfg["Seeds"]}], 2];
  maxDifference = Max[Flatten[comparisons]];
  external = TrueQ[maxDifference <= 10^-12];
- <|"ZeroRowsPresent" -> (Length[zeroRows] === 3 Length[cfg["Seeds"]]),
+ <|"ZeroRowsPresent" -> (Length[zeroRows] === Length[canonicalFamilies] Length[cfg["Seeds"]]),
+  "CoordinateAndCommonProfileHashesAgree" -> internal,
   "FamilyZeroLimitsAgreeRowByRow" -> internal,
   "SchwarzschildReferencePath" -> referencePath,
   "SchwarzschildRowsAgreeRowByRow" -> external,
@@ -251,23 +263,23 @@ writeBundle[tag_, scanRuns_, anchorRuns_, cfg_, require12_:False] := Module[{dir
 
 runStatic[] := Module[{report = staticTestReport, tests},
  require[report["TestsFailedCount"] === 0, "Existing construction static tests failed."];
- tests = TestReport[{VerificationTest[Total[Length /@ Values[canonicalFamilies]], 13],
-   VerificationTest[Length[specsAnchors[]], 3], VerificationTest[Length[DeleteDuplicates[familyParameterName /@ Keys[canonicalFamilies]]], 3],
+ tests = TestReport[{VerificationTest[Total[Length /@ Values[canonicalFamilies]], 8],
+   VerificationTest[Length[specsAnchors[]], 2], VerificationTest[Length[DeleteDuplicates[familyParameterName /@ Keys[canonicalFamilies]]], 2],
    VerificationTest[PathAnisotropyCurvature`distanceMatrixRadius[{{0.,0.},{1.,0.},{0.,1.}}, 1], 1.15]}];
  require[tests["TestsFailedCount"] === 0, "Family static tests failed."]; Print[report]; Print[tests]];
 
-smokeConfig[] := baseConfig[250, {1,2}, FileNameJoin[{repoRoot, "results", "broader_family_audit_smoke"}]];
-fullConfig[] := baseConfig[1000, Range[10], FileNameJoin[{repoRoot, "results", "broader_family_audit_multiseed"}]];
+smokeConfig[] := baseConfig[250, {1,2}, FileNameJoin[{repoRoot, "results", "bardeen_hayward_audit_smoke"}]];
+fullConfig[] := baseConfig[1000, Range[10], FileNameJoin[{repoRoot, "results", "bardeen_hayward_audit_multiseed"}]];
 
 runSmoke[] := Module[{cfg = smokeConfig[], scans, anchors, validation},
  scans = runResumable["scan", specsAll[], cfg["Seeds"], cfg];
  anchors = runResumable["anchor", specsAnchors[], cfg["Seeds"], cfg];
- validation = writeBundle["broader_families_N250_seeds2", scans, anchors, cfg, True];
+ validation = writeBundle["bardeen_hayward_N250_seeds2", scans, anchors, cfg, True];
  Print["Smoke passed: ", InputForm[validation]]];
 
 runTiming[] := Module[{cfg, specs, runs, rows},
- cfg = baseConfig[1000, {1}, FileNameJoin[{repoRoot, "results", "broader_family_audit_timing_N1000"}]];
- specs = {{"RN",0.4},{"Bardeen",0.2},{"Hayward",0.2}};
+ cfg = baseConfig[1000, {1}, FileNameJoin[{repoRoot, "results", "bardeen_hayward_audit_timing_N1000"}]];
+ specs = {{"Bardeen",0.2},{"Hayward",0.2}};
  runs = runResumable["scan", specs, {1}, cfg]; rows = Flatten[Lookup[runs,"Rows"],1];
  exportRows[FileNameJoin[{cfg["OutputDirectory"], "family_builder_timing_rows.csv"}], rows];
  exportRows[FileNameJoin[{cfg["OutputDirectory"], "family_builder_timing_seconds.csv"}],
@@ -275,18 +287,28 @@ runTiming[] := Module[{cfg, specs, runs, rows},
 
 runFullFamilyScans[] := Module[{cfg = fullConfig[]}, runResumable["scan", specsAll[], cfg["Seeds"], cfg]];
 runFullAnchorAudits[] := Module[{cfg = fullConfig[]}, runResumable["anchor", specsAnchors[], cfg["Seeds"], cfg]];
+runFamilyScans[family_String] := Module[{cfg = fullConfig[], specs},
+ specs = Select[specsAll[], First[#] === family &];
+ require[specs =!= {}, "Unknown scan family " <> family];
+ runResumable["scan", specs, cfg["Seeds"], cfg]];
+runFamilyAnchor[family_String] := Module[{cfg = fullConfig[], specs},
+ specs = Select[specsAnchors[], First[#] === family &];
+ require[specs =!= {}, "Unknown anchor family " <> family];
+ runResumable["anchor", specs, cfg["Seeds"], cfg]];
 
 loadAll[kind_, specs_, cfg_] := Flatten[Table[Module[{p = checkpointPath[cfg, kind, f, v, s], x},
- x = If[FileExistsQ[p], Import[p,"MX"], $Failed]; require[validCheckpointQ[x,kind,f,v,s,cfg], "Missing/invalid checkpoint "<>p]; {x}],
- {f,DeleteDuplicates[First/@specs]},{v,Cases[specs,{f,x_}:>x]},{s,cfg["Seeds"]}],2];
+ x = If[FileExistsQ[p], Import[p,"MX"], $Failed]; require[validCheckpointQ[x,kind,f,v,s,cfg], "Missing/invalid checkpoint "<>p]; x],
+ {f,DeleteDuplicates[First/@specs]},{v,Cases[specs,{f,x_}:>x]},{s,cfg["Seeds"]}],Infinity];
 
 runAggregate[] := Module[{cfg=fullConfig[], scans, anchors}, scans=loadAll["scan",specsAll[],cfg]; anchors=loadAll["anchor",specsAnchors[],cfg];
- writeBundle["broader_families_N1000_seeds10",scans,anchors,cfg,True]];
+ writeBundle["bardeen_hayward_N1000_seeds10",scans,anchors,cfg,True]];
 
 runValidate[] := runAggregate[];
 
 args = Rest[$ScriptCommandLine]; mode = If[args === {}, "", First[args]];
 Switch[mode, "static", runStatic[], "smoke", runSmoke[], "timing", runTiming[],
  "full-family-scans", runFullFamilyScans[], "full-anchor-audits", runFullAnchorAudits[],
+ "full-bardeen-scans", runFamilyScans["Bardeen"], "full-hayward-scans", runFamilyScans["Hayward"],
+ "full-bardeen-anchor", runFamilyAnchor["Bardeen"], "full-hayward-anchor", runFamilyAnchor["Hayward"],
  "aggregate", runAggregate[], "validate", runValidate[],
  _, fail["Usage: wolframscript -file scripts/run_broader_family_audit.wls static|smoke|timing|full-family-scans|full-anchor-audits|aggregate|validate",64]];
