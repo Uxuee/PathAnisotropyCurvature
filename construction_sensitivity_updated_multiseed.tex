@@ -1,5 +1,7 @@
 \documentclass[11pt]{article}
+\ifdefined\pdfsuppresswarningpagegroup
 \pdfsuppresswarningpagegroup=1
+\fi
 
 \usepackage[a4paper,margin=1in]{geometry}
 \usepackage{amsmath,amssymb}
@@ -35,24 +37,26 @@ slices of static black-hole geometries as controlled benchmarks.
 
 We focus on a shell-based shortest-path anisotropy statistic, $\clog$, defined
 as the cubic mean deviation of logarithmic shortest-path multiplicities over
-finite graph-distance shells. Representative Schwarzschild/Flamm, Bardeen, and
-Hayward graphs show similar radial organization under the original calibrated
-construction. We then perform a paired ten-seed Schwarzschild/Flamm audit using
+finite graph-distance shells. Ten-seed Bardeen and Hayward parameter scans show
+organized but realization-dependent radial behavior under the original
+calibrated construction. We perform paired five-protocol audits at
+Schwarzschild/Flamm, Bardeen $g=0.2$, and Hayward $\ell=0.2$ using
 five graph/control protocols: the original matched-flat KNN convention, strict
 radius-threshold controls, pure KNN graphs, mutual KNN graphs, and
 edge-count-matched radius graphs. In every run the black-hole graph and its
 controls reuse the same radial-angular sample, and correlations are computed
 from twelve common radial bins.
 
-The audited result differs qualitatively from the earlier single-realization
-construction sweep. The mean absolute black-hole/control correlation gaps are
+For Schwarzschild, the mean absolute black-hole/control correlation gaps are
 $0.242\pm0.161$, $0.688\pm0.442$, $0.233\pm0.199$,
 $0.422\pm0.323$, and $0.681\pm0.445$ for the original, strict-radius,
 pure-KNN, mutual-KNN, and edge-matched-radius protocols, respectively
 (mean $\pm$ standard deviation over ten seeds). Radius-style controls therefore
 do not erase the separation; they give the largest average magnitudes in the
-audited sample. Signed gaps vary across realizations and change sign under some
-protocols.
+audited sample. The Bardeen and Hayward anchors reproduce this qualitative
+construction dependence: their original mean absolute gaps are $0.255\pm0.174$
+and $0.250\pm0.165$, whereas edge-matched-radius gaps are $0.676\pm0.452$ and
+$0.680\pm0.443$. Signed gaps vary across realizations and protocols.
 
 Thus, the black-hole/control separation is neither graph-construction invariant
 nor realization independent. $\clog$ is a reproducible finite-graph statistic
@@ -114,12 +118,10 @@ and control. We distinguish three logically different questions:
 and (iii) invariance under graph construction. The ten-seed experiment quantifies
 the first two and does not support the third.
 
-The paper retains the Schwarzschild/Flamm, Bardeen, and Hayward family
-benchmarks from the preceding draft. The multi-protocol statistical audit is
-performed on Schwarzschild/Flamm, where complete paired raw data and quality
-controls are available. The Bardeen and Hayward figures are used as
-fixed-protocol geometric context; extending the same ten-seed construction
-matrix to those families is identified explicitly as the next validation step.
+We report canonical ten-seed fixed-protocol scans for Bardeen and Hayward and
+representative five-protocol audits for both families. These data separate
+reproducibility within a protocol from sensitivity across constructions; they
+do not establish graph-independent curvature invariance.
 
 \section{Graph benchmarks and matched controls}
 
@@ -162,7 +164,9 @@ and for the Hayward family,
     =
     1-\frac{2Mr^2}{r^3+2M\ell^2}.
 \end{equation}
-The representative visual benchmarks use $M=1/2$, $g=0.2$, and $\ell=0.2$.
+The scans use $M=1/2$, $g\in\{0,0.1,0.2,0.3\}$, and
+$\ell\in\{0,0.1,0.2,0.3\}$. The five-protocol anchors use $g=0.2$ and
+$\ell=0.2$.
 
 \subsection{Matched-flat controls}
 
@@ -230,11 +234,14 @@ continuum scalar by definition.
 \subsection{Canonical numerical protocol}
 \label{sec:numerical-protocol}
 
-The audited graphs use $M=1/2$, $N=1000$, construction parameter $k=16$,
+All audited graphs use $M=1/2$, $N=1000$, construction parameter $k=16$,
 graph-shell radius $r_g=3$, twelve common radial bins, and seeds 1--10. One
-Schwarzschild/Flamm radial-angular sample is generated per seed and reused by all
+radial-angular sample is generated per family, parameter, and seed. Its flat
+control reuses that sample; at each anchor the same sample is also reused by all
 five graph/control protocols. The calibrated radius convention retains the
-factor 1.15 used in the original implementation.
+factor 1.15 used in the original implementation. Pearson radial correlations
+are primary; Spearman correlations and Pearson correlation of the black-hole
+common-bin $\clog$ profile with $\log K$ on those same bins are secondary.
 
 Vertex-level $\clog$ values are evaluated first. The black-hole and flat values
 are then binned on the same overlapping radial domain. Pearson correlations are
@@ -421,43 +428,87 @@ Original matched-flat KNN & Pure KNN       & $0.009$ & $[-0.192,0.209]$ \\
 }
 \end{table}
 
-\section{Relation to the broader black-hole benchmark program}
+\section{Canonical Bardeen and Hayward results}
 
-Figures~\ref{fig:bh-family-graph-visualization} and
-\ref{fig:bh-family-radial-profiles} remain useful because they show that the
-motivating radial organization appears in representative Bardeen and Hayward
-embeddings under the original fixed construction. The new audit changes the
-interpretation of that observation. Similar-looking profiles across geometries
-do not imply that the black-hole/control gap is invariant under changes in the
-edge rule or null model.
+The fixed-protocol scans quantify the family context that was previously only
+illustrative. Table~\ref{tab:family-scans} reports mean $\pm$ sample standard
+deviation over ten paired seeds. The flat-control values repeat across parameter
+values because the same seed convention and radial-angular sampling law are
+used. Increasing either regularization parameter changes the black-hole profile
+gradually compared with the large realization spread. The black-hole common-bin
+profile is negatively related to $\log K$ on average; for example, the mean
+Pearson correlations at parameter $0.2$ are $-0.674\pm0.258$ (Bardeen) and
+$-0.681\pm0.245$ (Hayward). These are associations on the same twelve bins, not
+evidence that $\clog$ is a curvature scalar.
 
-The earlier construction heatmap and table, which reported a common gap near
-$0.78$ for all three families and a collapse to the $10^{-3}$ level under
-radius-style controls, were based on an incompatible single-realization/legacy
-pipeline. They are superseded by the canonical ten-seed Schwarzschild results in
-Table~\ref{tab:audit-summary} and are not reproduced here. A direct cross-family
-construction claim requires the same paired common-bin audit for Bardeen and
-Hayward. This is a bounded extension of the present work rather than a change of
-research question.
+\begin{table}[H]
+\centering
+\caption{Canonical original-protocol family scans (mean $\pm$ SD, ten seeds).}
+\label{tab:family-scans}
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcrrrr}
+\toprule
+Family & Parameter & $\rho_{\rm BH}$ & $\rho_{\rm flat}$ & $\drho$ & $|\drho|$ \\
+\midrule
+Bardeen & 0.0 & $0.592\pm0.266$ & $0.432\pm0.201$ & $0.160\pm0.250$ & $0.242\pm0.161$ \\
+        & 0.1 & $0.587\pm0.275$ & $0.432\pm0.201$ & $0.155\pm0.258$ & $0.248\pm0.159$ \\
+        & 0.2 & $0.581\pm0.293$ & $0.432\pm0.201$ & $0.149\pm0.279$ & $0.255\pm0.174$ \\
+        & 0.3 & $0.563\pm0.331$ & $0.432\pm0.201$ & $0.131\pm0.316$ & $0.272\pm0.192$ \\
+Hayward & 0.0 & $0.592\pm0.266$ & $0.432\pm0.201$ & $0.160\pm0.250$ & $0.242\pm0.161$ \\
+        & 0.1 & $0.590\pm0.271$ & $0.432\pm0.201$ & $0.158\pm0.254$ & $0.246\pm0.159$ \\
+        & 0.2 & $0.588\pm0.278$ & $0.432\pm0.201$ & $0.156\pm0.263$ & $0.250\pm0.165$ \\
+        & 0.3 & $0.579\pm0.292$ & $0.432\pm0.201$ & $0.147\pm0.276$ & $0.254\pm0.169$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
 
-An exploratory comparison with shell size, mean logarithmic multiplicity,
-degree, and clustering was included in the previous draft. Because those values
-were not regenerated under the canonical ten-seed pipeline, they are not used as
-inferential evidence here. The conceptual lesson remains relevant: different
-graph observables can respond differently to the same edge rule and null model,
-so a complete audit should eventually vary both the diagnostic and the
-construction.
+\begin{figure}[H]
+\centering
+\includegraphics[width=.49\linewidth]{results/figures/bardeen_canonical_parameter_scan.pdf}
+\includegraphics[width=.49\linewidth]{results/figures/hayward_canonical_parameter_scan.pdf}
+\caption{Canonical Bardeen (left) and Hayward (right) parameter scans. Error
+bars show sample SD across paired seeds.}
+\label{fig:family-scans}
+\end{figure}
+
+The anchor audits show that the Schwarzschild construction sensitivity
+generalizes qualitatively. For Bardeen, mean $|\drho|$ is $0.255\pm0.174$,
+$0.678\pm0.435$, $0.211\pm0.170$, $0.422\pm0.322$, and $0.676\pm0.452$ in
+protocol order. For Hayward the corresponding values are $0.250\pm0.165$,
+$0.684\pm0.441$, $0.216\pm0.200$, $0.413\pm0.337$, and $0.680\pm0.443$.
+Thus radius-style controls again give the largest average separation, but broad
+paired variation precludes a universal protocol ranking.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=.49\linewidth]{results/figures/bardeen_anchor_mean_abs_gap.pdf}
+\includegraphics[width=.49\linewidth]{results/figures/hayward_anchor_mean_abs_gap.pdf}
+\caption{Five-protocol anchors for Bardeen $g=0.2$ (left) and Hayward
+$\ell=0.2$ (right), shown as mean $|\drho|\pm$ SD. Seed-level signed and
+absolute plots are retained with the reproducibility outputs.}
+\label{fig:family-anchors}
+\end{figure}
+
+The zero-parameter rows reproduce Schwarzschild row by row, not merely in
+their means: coordinate hashes, common-profile hashes, and every exported
+numeric output agree for each seed to tolerance $10^{-12}$ (maximum observed
+difference zero). Unsupported legacy claims of a common $0.78$ gap and a
+radius-control collapse to $10^{-3}$ are therefore removed rather than mixed
+with the canonical pipeline.
 
 \section{Discussion}
 
-The paired audit changes, but does not erase, the original result. $\clog$
-displays organized radial behavior on the black-hole embedding graphs. The
+The paired audits change, but do not erase, the original result. $\clog$
+displays organized radial behavior across the three black-hole embedding
+families. The
 question is whether the difference from a flat control is stable when the graph
 representation changes. It is not. Both the magnitude and the sign of the gap
 depend on the full protocol and on the random realization.
 
 The most important correction is that radius-style controls do not absorb the
-signal in the canonical experiment. Strict-radius and edge-matched-radius
+signal in any canonical anchor experiment. Strict-radius and edge-matched-radius
 controls instead produce the largest mean absolute gaps. Their near equality is
 especially informative: exact edge-count matching does not remove the effect,
 and a small residual edge-count difference in the strict-radius protocol does
@@ -490,22 +541,24 @@ embeddings of spatial slices; relationships to intrinsic two-dimensional
 curvature, four-dimensional spacetime invariants, or non-embeddable data require
 separate analysis.
 
-The Bardeen and Hayward results in this manuscript are representative
-fixed-protocol visual benchmarks. The five-protocol ten-seed audit has not yet
-been completed for those families, so the paper does not claim cross-family
-construction invariance or a universal ordering of protocols. Multi-resolution
-runs, shell-radius sweeps, alternative binning, and canonical audits of the
-additional diagnostics remain useful extensions.
+The Bardeen and Hayward construction audits cover one representative parameter
+each rather than the complete protocol-by-parameter matrix. The paper therefore
+does not claim cross-family construction invariance or a universal ordering of
+protocols. Multi-resolution runs, shell-radius sweeps, alternative binning,
+additional parameter anchors, and canonical audits of other diagnostics remain
+useful extensions.
 
 \subsection{Reproducibility}
 
-The audited calculation contains exactly 50 raw rows, ten rows per protocol and
-five rows per seed. All primary correlations are numeric, every run contains
-twelve common radial bins, and no seed is omitted. The maximum radial-angular
-pairing mismatch is $1.33\times10^{-15}$. All graphs are connected and all
-valid-$\clog$ fractions equal one. The ten-seed computation required
-$3636.84$ seconds of seed computation, with individual seeds taking
-$312.4$--$444.9$ seconds.
+The new calculation contains exactly 80 family-scan rows and 100 anchor-audit
+rows, with no missing family, parameter, seed, or protocol. All primary and
+secondary correlations are numeric, every run contains twelve common radial
+bins, and the maximum radial-angular mismatch is $1.33\times10^{-15}$. Complete
+vertex sets, connectivity, valid-$\clog$ fractions, mutual-KNN subset checks,
+and exact or tie-explained edge matching are recorded. The 100 checkpoint units
+required $27701.3$ seconds ($7.69$ h) of compute time, ranging from $116.5$ to
+$1099.9$ seconds per checkpoint. The preceding Schwarzschild audit required
+$3636.84$ seconds.
 
 Code, scripts, raw data, quality-control tables, checkpoints, validation files,
 and manuscript figures are available in the \href{https://github.com/Uxuee/PathAnisotropyCurvature}{project repository}. A DOI-backed archival snapshot should accompany journal submission.
@@ -513,11 +566,11 @@ and manuscript figures are available in the \href{https://github.com/Uxuee/PathA
 \section{Conclusion}
 
 We studied the shortest-path anisotropy statistic $\clog$ on geometric graphs
-sampled from embedded black-hole spatial slices. Representative
-Schwarzschild/Flamm, Bardeen, and Hayward graphs show similar radial organization
-under the original calibrated construction. A paired ten-seed
-Schwarzschild/Flamm audit then tests how the black-hole/control separation
-changes under five graph/control protocols.
+sampled from embedded black-hole spatial slices. Canonical ten-seed Bardeen and
+Hayward scans show organized radial behavior under one fixed protocol, with
+family-parameter and realization dependence. Paired five-protocol audits at
+Schwarzschild and representative Bardeen and Hayward anchors test how the
+black-hole/control separation changes with graph construction.
 
 The audit does not confirm the earlier claim that radius-style controls erase
 the gap. Strict-radius and edge-matched-radius constructions instead produce the
@@ -530,9 +583,10 @@ The main conclusion is methodological. $\clog$ is a reproducible finite-shell
 shortest-path statistic under fully specified conditions, but it is not a
 graph-independent curvature scalar. Apparent geometric signals in spatial graph
 diagnostics should be interpreted as properties of complete
- diagnostic--construction--control protocols. Extending the same canonical
-paired audit to Bardeen and Hayward is the direct next test of how broadly this
-conclusion applies across black-hole embedding families.
+ diagnostic--construction--control protocols. The anchor results show that
+strong construction dependence is shared across the three tested families,
+while limited parameter, resolution, and shell coverage prevents a
+graph-independent curvature interpretation.
 
 \begin{thebibliography}{99}
 
