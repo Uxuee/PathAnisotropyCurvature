@@ -287,10 +287,18 @@ runTiming[] := Module[{cfg, specs, runs, rows},
 
 runFullFamilyScans[] := Module[{cfg = fullConfig[]}, runResumable["scan", specsAll[], cfg["Seeds"], cfg]];
 runFullAnchorAudits[] := Module[{cfg = fullConfig[]}, runResumable["anchor", specsAnchors[], cfg["Seeds"], cfg]];
+runFamilyScans[family_String] := Module[{cfg = fullConfig[], specs},
+ specs = Select[specsAll[], First[#] === family &];
+ require[specs =!= {}, "Unknown scan family " <> family];
+ runResumable["scan", specs, cfg["Seeds"], cfg]];
+runFamilyAnchor[family_String] := Module[{cfg = fullConfig[], specs},
+ specs = Select[specsAnchors[], First[#] === family &];
+ require[specs =!= {}, "Unknown anchor family " <> family];
+ runResumable["anchor", specs, cfg["Seeds"], cfg]];
 
 loadAll[kind_, specs_, cfg_] := Flatten[Table[Module[{p = checkpointPath[cfg, kind, f, v, s], x},
- x = If[FileExistsQ[p], Import[p,"MX"], $Failed]; require[validCheckpointQ[x,kind,f,v,s,cfg], "Missing/invalid checkpoint "<>p]; {x}],
- {f,DeleteDuplicates[First/@specs]},{v,Cases[specs,{f,x_}:>x]},{s,cfg["Seeds"]}],2];
+ x = If[FileExistsQ[p], Import[p,"MX"], $Failed]; require[validCheckpointQ[x,kind,f,v,s,cfg], "Missing/invalid checkpoint "<>p]; x],
+ {f,DeleteDuplicates[First/@specs]},{v,Cases[specs,{f,x_}:>x]},{s,cfg["Seeds"]}],Infinity];
 
 runAggregate[] := Module[{cfg=fullConfig[], scans, anchors}, scans=loadAll["scan",specsAll[],cfg]; anchors=loadAll["anchor",specsAnchors[],cfg];
  writeBundle["bardeen_hayward_N1000_seeds10",scans,anchors,cfg,True]];
@@ -300,5 +308,7 @@ runValidate[] := runAggregate[];
 args = Rest[$ScriptCommandLine]; mode = If[args === {}, "", First[args]];
 Switch[mode, "static", runStatic[], "smoke", runSmoke[], "timing", runTiming[],
  "full-family-scans", runFullFamilyScans[], "full-anchor-audits", runFullAnchorAudits[],
+ "full-bardeen-scans", runFamilyScans["Bardeen"], "full-hayward-scans", runFamilyScans["Hayward"],
+ "full-bardeen-anchor", runFamilyAnchor["Bardeen"], "full-hayward-anchor", runFamilyAnchor["Hayward"],
  "aggregate", runAggregate[], "validate", runValidate[],
  _, fail["Usage: wolframscript -file scripts/run_broader_family_audit.wls static|smoke|timing|full-family-scans|full-anchor-audits|aggregate|validate",64]];
