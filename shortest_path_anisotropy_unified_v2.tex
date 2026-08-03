@@ -1,5 +1,7 @@
 \documentclass[11pt,a4paper]{article}
-\pdfsuppresswarningpagegroup=1
+\ifdefined\pdfsuppresswarningpagegroup
+  \pdfsuppresswarningpagegroup=1
+\fi
 
 % ------------------------------------------------------------
 % Packages
@@ -9,7 +11,7 @@
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}
 \usepackage{geometry}
 \usepackage{authblk}
 \usepackage{bm}
@@ -20,6 +22,7 @@
 \usepackage{float}
 
 \geometry{margin=1in}
+\setlength{\emergencystretch}{2em}
 
 % Use the real figure when available; otherwise insert a visible placeholder.
 % This keeps the manuscript compilable when the source is shared without the figure directory.
@@ -514,7 +517,7 @@ RN, Bardeen, Hayward, logarithmic-Kretschmann comparisons, Forman--Ricci and Oll
 
 The code, notebooks, tables, and figures used in this study will be made available in the project repository \url{https://github.com/Uxuee/PathAnisotropyCurvature}.
 
-The audited raw, summary, quality-control, configuration, validation, runtime, checkpoint, provenance, paired-contrast, and median/IQR files are stored under \texttt{results/construction\_audit\_multiseed/} and \texttt{results/provenance/}. The complete analysis can be rerun headlessly from the committed scripts. Legacy results without stored raw data are identified explicitly in the provenance table rather than being mixed with the canonical audit. A DOI-backed archive remains necessary before journal submission.
+The audited raw, summary, quality-control, configuration, validation, runtime, checkpoint, provenance, paired-contrast, and median/IQR files are stored under \path{results/construction_audit_multiseed/} and \path{results/provenance/}. The complete analysis can be rerun headlessly from the committed scripts. Legacy results without stored raw data are identified explicitly in the provenance table rather than being mixed with the canonical audit. A DOI-backed archive remains necessary before journal submission.
 
 \section*{Acknowledgments}
 
@@ -573,7 +576,7 @@ and
     \quad
     \text{for Hayward}.
 \end{equation}
-Therefore, a necessary future consistency check is that these limits reproduce the Schwarzschild/Flamm result under the same seed, graph/control protocol, common bins, and sign convention. The old single-seed values are removed because their raw profiles are unavailable.
+Therefore, a necessary future consistency check is that these limits reproduce the Schwarzschild/\allowbreak Flamm result under the same seed, graph/control protocol, common bins, and sign convention. The old single-seed values are removed because their raw profiles are unavailable.
 
 \subsection{Role of the matched-flat control}
 
