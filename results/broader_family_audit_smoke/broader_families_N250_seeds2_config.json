@@ -1,0 +1,48 @@
+{
+	"AuditVersion":"2026-08-broader-family-canonical-v2",
+	"N":250,
+	"M":0.5,
+	"k":16,
+	"GraphShellRadius":3,
+	"Bins":12,
+	"MinimumCommonBins":3,
+	"Seeds":[
+		1,
+		2
+	],
+	"Protocols":[
+		"Original matched-flat KNN",
+		"Strict radius",
+		"Pure KNN",
+		"Mutual KNN",
+		"Edge-matched radius"
+	],
+	"DistanceMatrixRadiusCalibrationFactor":1.15,
+	"Families":{
+		"RN":[
+			0.0,
+			0.1,
+			0.2,
+			0.3,
+			0.4
+		],
+		"Bardeen":[
+			0.0,
+			0.1,
+			0.2,
+			0.3
+		],
+		"Hayward":[
+			0.0,
+			0.1,
+			0.2,
+			0.3
+		]
+	},
+	"AnchorParameters":{
+		"RN":0.4,
+		"Bardeen":0.2,
+		"Hayward":0.2
+	},
+	"OutputDirectory":"C:\\Users\\palom\\Documents\\graphs\\results\\broader_family_audit_smoke"
+}
