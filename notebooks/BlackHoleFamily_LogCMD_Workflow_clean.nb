@@ -1,0 +1,325 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* CreatedBy='ChatGPT' *)
+Notebook[{
+Cell["Black-hole family LogCMD workflow (clean aligned version)", "Title"],
+Cell["This notebook is an organized, restart-safe workflow extracted from the working curvature_estimator notebook. It keeps the calibrated Schwarzschild/Flamm alignment convention explicit: black-hole family members are built from the same Flamm radial-angular sampling, and zero-deformation limits use the base Flamm graph itself so RN Q=0, Bardeen g=0, and Hayward l=0 reduce exactly to Schwarzschild/Flamm.", "Text"],
+Cell["0. Setup", "Section"],
+Cell[BoxData["ClearAll[\"Global`*\"];
+
+projectRoot =
+  If[
+    StringQ[NotebookDirectory[]],
+    DirectoryName[NotebookDirectory[]],
+    Directory[]
+  ];
+
+codeFile =
+  FileNameJoin[
+    {
+      projectRoot,
+      \"code\",
+      \"CurvatureEstimator.wl\"
+    }
+  ];
+
+If[
+  ! FileExistsQ[codeFile],
+  Print[\"Could not find code file: \", codeFile];
+  Print[\"Set projectRoot manually, then re-run this cell.\"];
+  Abort[]
+];
+
+Get[codeFile];
+Needs[\"PathAnisotropyCurvature`\"];
+
+figDir =
+  FileNameJoin[
+    {
+      projectRoot,
+      \"results\",
+      \"figures\"
+    }
+  ];
+
+tableDir =
+  FileNameJoin[
+    {
+      projectRoot,
+      \"results\",
+      \"tables\"
+    }
+  ];
+
+ensureDirectory[figDir];
+ensureDirectory[tableDir];
+
+Print[\"Project root: \", projectRoot];
+Print[\"Loaded: \", codeFile];"], "Input"],
+Cell["1. Parameters", "Section"],
+Cell[BoxData["SeedRandom[1234];
+
+nFig = 1000;
+Mfig = 1/2;
+kFig = 16;
+rgFig = 3;
+nbinsFig = 12;
+
+Qfig = 0.4;
+gFig = 0.2;
+ellFig = 0.2;"], "Input"],
+Cell["2. Build aligned datasets", "Section"],
+Cell["Important: use buildBlackHoleFigureDatasets here. It builds one base Flamm sampling and then uses it for all black-hole family members. This is the part that prevents the old mistake where RN Q=0 did not reduce to the same Flamm/Schwarzschild graph because the graph construction / sampling alignment was changed.", "Text"],
+Cell[BoxData["Print[\"Building aligned four-geometry dataset set...\"];
+
+figData =
+  buildBlackHoleFigureDatasets[
+    nFig,
+    Mfig,
+    kFig,
+    Qfig,
+    gFig,
+    ellFig
+  ];
+
+figFlamm = figData[\"Flamm\"];
+figRN = figData[\"RN\"];
+figBardeen = figData[\"Bardeen\"];
+figHayward = figData[\"Hayward\"];
+
+Dataset[
+  {
+    <|\"Key\" -> \"Flamm\", \"Type\" -> figFlamm[\"Type\"], \"N\" -> figFlamm[\"N\"], \"k\" -> figFlamm[\"k\"]|>,
+    <|\"Key\" -> \"RN\", \"Type\" -> figRN[\"Type\"], \"N\" -> figRN[\"N\"], \"k\" -> figRN[\"k\"]|>,
+    <|\"Key\" -> \"Bardeen\", \"Type\" -> figBardeen[\"Type\"], \"N\" -> figBardeen[\"N\"], \"k\" -> figBardeen[\"k\"]|>,
+    <|\"Key\" -> \"Hayward\", \"Type\" -> figHayward[\"Type\"], \"N\" -> figHayward[\"N\"], \"k\" -> figHayward[\"k\"]|>
+  }
+]"], "Input"],
+Cell["3. Sanity check: Schwarzschild limit alignment", "Section"],
+Cell[BoxData["Print[\"Checking exact Schwarzschild-limit alignment...\"];
+
+limitData =
+  buildBlackHoleFigureDatasets[
+    400,
+    Mfig,
+    kFig,
+    0.0,
+    0.0,
+    0.0
+  ];
+
+limitFlamm = limitData[\"Flamm\"];
+limitRN = limitData[\"RN\"];
+limitBardeen = limitData[\"Bardeen\"];
+limitHayward = limitData[\"Hayward\"];
+
+alignmentCheck =
+  <|
+    \"RN Q=0 points equal Flamm\" -> TrueQ[limitRN[\"Points\"] == limitFlamm[\"Points\"]],
+    \"RN Q=0 edges equal Flamm\" -> TrueQ[Sort[EdgeList[limitRN[\"Graph\"]]] == Sort[EdgeList[limitFlamm[\"Graph\"]]]],
+    \"Bardeen g=0 points equal Flamm\" -> TrueQ[limitBardeen[\"Points\"] == limitFlamm[\"Points\"]],
+    \"Bardeen g=0 edges equal Flamm\" -> TrueQ[Sort[EdgeList[limitBardeen[\"Graph\"]]] == Sort[EdgeList[limitFlamm[\"Graph\"]]]],
+    \"Hayward l=0 points equal Flamm\" -> TrueQ[limitHayward[\"Points\"] == limitFlamm[\"Points\"]],
+    \"Hayward l=0 edges equal Flamm\" -> TrueQ[Sort[EdgeList[limitHayward[\"Graph\"]]] == Sort[EdgeList[limitFlamm[\"Graph\"]]]]
+  |>;
+
+Dataset[{alignmentCheck}]"], "Input"],
+Cell["4. Evaluate LogCMD", "Section"],
+Cell[BoxData["Print[\"Evaluating Flamm...\"];
+resFlamm = evaluateDataset[figFlamm, rgFig];
+
+Print[\"Evaluating RN...\"];
+resRN = evaluateDataset[figRN, rgFig];
+
+Print[\"Evaluating Bardeen...\"];
+resBardeen = evaluateDataset[figBardeen, rgFig];
+
+Print[\"Evaluating Hayward...\"];
+resHayward = evaluateDataset[figHayward, rgFig];
+
+panelPairs =
+  {
+    {figFlamm, resFlamm},
+    {figRN, resRN},
+    {figBardeen, resBardeen},
+    {figHayward, resHayward}
+  };
+
+labels =
+  {
+    \"Schwarzschild / Flamm\",
+    \"Reissner-Nordstrom, Q = 0.4\",
+    \"Bardeen, g = 0.2\",
+    \"Hayward, l = 0.2\"
+  };
+
+Length /@ (Normal /@ {resFlamm, resRN, resBardeen, resHayward})"], "Input"],
+Cell["5. Overview figure: original style, red-blue palette", "Section"],
+Cell[BoxData["valsAll = allGoodEstimatorValues[panelPairs];
+
+sharedRangeFull = MinMax[valsAll];
+sharedRangeClipped = Quantile[valsAll, {0.02, 0.98}];
+
+(* Use clipped range for cleaner color contrast. Change to sharedRangeFull if you want literal min-max. *)
+sharedRange = sharedRangeClipped;
+
+blackHoleFamilyPanelRedBlue =
+  makeBlackHoleFamilyPanel[
+    panelPairs,
+    labels,
+    sharedRange,
+    redBlueCF
+  ];
+
+Export[
+  FileNameJoin[{figDir, \"black_hole_family_colored_by_LogCMD_red_blue.png\"}],
+  blackHoleFamilyPanelRedBlue,
+  ImageResolution -> 300
+];
+
+blackHoleFamilyPanelRedBlue"], "Input"],
+Cell["6. Optional: blue-red palette", "Section"],
+Cell[BoxData["blackHoleFamilyPanelBlueRed =
+  makeBlackHoleFamilyPanel[
+    panelPairs,
+    labels,
+    sharedRange,
+    blueRedCF
+  ];
+
+Export[
+  FileNameJoin[{figDir, \"black_hole_family_colored_by_LogCMD_blue_red.png\"}],
+  blackHoleFamilyPanelBlueRed,
+  ImageResolution -> 300
+];
+
+blackHoleFamilyPanelBlueRed"], "Input"],
+Cell["7. Common-bin Flamm vs matched-flat control", "Section"],
+Cell[BoxData["Print[\"Building matched-flat control from the same base Flamm sampling...\"];
+
+matchedFlat =
+  buildMatchedFlatFromFlamm3[
+    figFlamm,
+    kFig
+  ];
+
+resMatchedFlat =
+  evaluateDataset[
+    matchedFlat,
+    rgFig
+  ];
+
+commonFlammBinned =
+  commonRadialBinnedComparison[
+    matchedFlat,
+    resMatchedFlat,
+    figFlamm,
+    resFlamm,
+    \"LogCMD\",
+    nbinsFig
+  ];
+
+commonFlammPlot =
+  plotCommonRadialProfiles[
+    commonFlammBinned,
+    \"Matched flat\",
+    \"Flamm\",
+    \"Schwarzschild/Flamm vs matched flat, common radial bins\",
+    FileNameJoin[{figDir, \"flamm_matched_flat_common_bins.png\"}]
+  ];
+
+commonFlammPlot"], "Input"],
+Cell["8. Single-seed numerical summary", "Section"],
+Cell[BoxData["makeSummaryRow[name_, data_, res_] :=
+ Module[
+  {binned},
+  binned =
+    binnedFlammComparison[
+      data,
+      res,
+      \"LogCMD\",
+      nbinsFig
+    ];
+  <|
+    \"Geometry\" -> name,
+    \"CorrRLogCMD\" -> corrFromBinned[binned],
+    \"CorrLogKLogCMD\" ->
+      safeCorrelation[
+        Log[Lookup[binned, \"KMean\"]],
+        Lookup[binned, \"EstimatorMean\"]
+      ]
+  |>
+];
+
+summaryRows =
+  {
+    makeSummaryRow[\"Schwarzschild/Flamm\", figFlamm, resFlamm],
+    makeSummaryRow[\"RN Q=0.4\", figRN, resRN],
+    makeSummaryRow[\"Bardeen g=0.2\", figBardeen, resBardeen],
+    makeSummaryRow[\"Hayward l=0.2\", figHayward, resHayward]
+  };
+
+Export[
+  FileNameJoin[{tableDir, \"four_geometry_single_seed_summary.csv\"}],
+  summaryRows
+];
+
+Dataset[summaryRows]"], "Input"],
+Cell["9. Optional full 10-seed scans", "Section"],
+Cell[BoxData["(* This can be slow. Uncomment only when you want to regenerate tables.
+
+seeds10 = Range[1001, 1010];
+
+Qs = {0.0, 0.1, 0.2, 0.3, 0.4};
+gs = {0.0, 0.1, 0.2, 0.3};
+ells = {0.0, 0.1, 0.2, 0.3};
+
+rnScanRows =
+  scanRNOriginalControl[
+    Qs,
+    seeds10,
+    nFig,
+    Mfig,
+    Mfig,
+    kFig,
+    rgFig,
+    nbinsFig
+  ];
+
+bardeenScanRows =
+  scanBardeenOriginalControl[
+    gs,
+    seeds10,
+    nFig,
+    Mfig,
+    Mfig,
+    kFig,
+    rgFig,
+    nbinsFig
+  ];
+
+haywardScanRows =
+  scanHaywardOriginalControl[
+    ells,
+    seeds10,
+    nFig,
+    Mfig,
+    Mfig,
+    kFig,
+    rgFig,
+    nbinsFig
+  ];
+
+rnSummary = summarizeBHScan[rnScanRows, \"Q\"];
+bardeenSummary = summarizeBHScan[bardeenScanRows, \"g\"];
+haywardSummary = summarizeBHScan[haywardScanRows, \"ell\"];
+
+Export[FileNameJoin[{tableDir, \"rn_charge_scan_10seeds_original_control.csv\"}], Normal[rnSummary]];
+Export[FileNameJoin[{tableDir, \"bardeen_parameter_scan_10seeds_original_control.csv\"}], Normal[bardeenSummary]];
+Export[FileNameJoin[{tableDir, \"hayward_parameter_scan_10seeds_original_control.csv\"}], Normal[haywardSummary]];
+
+{rnSummary, bardeenSummary, haywardSummary}
+
+*)"], "Input"]
+}, WindowTitle -> "Black-hole family LogCMD workflow - clean aligned"]
