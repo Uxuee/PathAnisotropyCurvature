@@ -1,0 +1,52 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=25mm]{geometry}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\title{Supplementary Reproducibility Note}
+\author{Ariadna Uxue Palomino Ylla}
+\date{}
+\begin{document}
+\maketitle
+
+\section{Canonical data inventory}
+
+The validated family calculation contains 80 fixed-protocol scan rows: two
+families, four parameter values per family, and ten paired seeds. The anchor
+audit contains 100 rows: two family anchors, five graph/control protocols, and
+ten paired seeds. Every run uses $N=1000$, $M=1/2$, $k=16$, graph-shell radius
+$r_g=3$, twelve common radial bins, and the calibrated radius factor 1.15.
+
+All expected family, parameter, seed, and protocol combinations are present.
+There are zero missing primary or secondary correlations. The maximum
+radial-angular coordinate mismatch is $1.3322676295501878\times10^{-15}$ for
+the family scans and $8.881784197001252\times10^{-16}$ for the anchor audits.
+Complete vertex sets, connectivity metadata, valid-estimator fractions,
+mutual-KNN subset checks, and exact or tie-explained edge matching are retained.
+
+\section{Zero-parameter consistency}
+
+Bardeen $g=0$ and Hayward $\ell=0$ reproduce the Schwarzschild/Flamm output
+row by row for every seed. Coordinate hashes and common-profile hashes agree;
+the maximum numeric difference is zero at tolerance $10^{-12}$.
+
+\section{Repository and execution}
+
+The repository is
+\href{https://github.com/Uxuee/PathAnisotropyCurvature}{github.com/Uxuee/PathAnisotropyCurvature}.
+Core estimator functions are under \texttt{code/}; resumable headless runners
+and analysis scripts are under \texttt{scripts/}; validation outputs, summaries,
+and figures are under \texttt{results/}; manuscript materials are under
+\texttt{construction\_sensitivity\_latex\_project/} and
+\texttt{submission\_jcn/}. Raw numerical results are retained in stable-header
+CSV files, while completed family/parameter/seed units are stored as resumable
+Wolfram MX checkpoints in the research repository but excluded from the journal
+upload ZIP.
+
+Calculations were executed headlessly with Wolfram Language via
+\texttt{wolframscript}. The 100 Bardeen/Hayward checkpoint units required
+27,701.3 seconds (7.69 hours), with individual units ranging from 116.5 to
+1,099.9 seconds. The preceding Schwarzschild five-protocol audit required
+3,636.84 seconds. Manuscript PDFs were compiled with Tectonic; Poppler was used
+for page rendering and visual quality assurance.
+
+\end{document}

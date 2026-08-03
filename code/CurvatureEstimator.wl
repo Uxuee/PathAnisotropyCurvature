@@ -981,9 +981,7 @@ plotCommonRadialProfiles[commonBinned_, label1_: "Matched flat", label2_: "Flamm
     FrameLabel -> {"Common radial bin coordinate r", "Binned mean LogCMD"},
     PlotLegends -> {label1, label2},
     PlotMarkers -> Automatic,
-    GridLines -> {Automatic, Automatic},
-    GridLinesStyle -> Directive[GrayLevel[0.65], Opacity[0.32], AbsoluteThickness[0.6]],
-    Method -> {"GridLinesInFront" -> False},
+    GridLines -> None,
     ImageSize -> Large,
     PlotLabel -> title
    ];

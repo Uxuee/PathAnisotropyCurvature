@@ -60,7 +60,7 @@ colors={RGBColor[.12,.47,.71],RGBColor[.85,.33,.10],RGBColor[.20,.63,.17],RGBCol
 Do[Module[{s=Select[scanSummary,#Family===fam&],parLabel,plot}, parLabel=If[fam==="Bardeen","g","ell"];
  plot=ListLinePlot[{({#ParameterValue,Around[#RhoBHMean,#RhoBHSD]}&/@s),({#ParameterValue,Around[#RhoFlatMean,#RhoFlatSD]}&/@s),({#ParameterValue,Around[#AbsDeltaRhoMean,#AbsDeltaRhoSD]}&/@s)},
   Frame->True,FrameLabel->{parLabel,"Correlation / absolute gap"},PlotLegends->{"BH rho","Flat rho","|Delta rho|"},PlotMarkers->Automatic,
-  GridLines->{Automatic,Automatic},GridLinesStyle->Directive[GrayLevel[.65],Opacity[.32],AbsoluteThickness[.6]],Method->{"GridLinesInFront"->False},
+  GridLines->None,
   PlotRange->All,ImageSize->520,PlotLabel->fam<>" canonical fixed-protocol scan (mean +/- SD)"];
  Export[FileNameJoin[{figDir,ToLowerCase[fam]<>"_canonical_parameter_scan.pdf"}],plot];
  Export[FileNameJoin[{figDir,ToLowerCase[fam]<>"_canonical_parameter_scan.png"}],plot,ImageResolution->180]],{fam,families}];
@@ -69,16 +69,16 @@ Do[Module[{s=Select[anchorSummary,#Family===fam&],meanPlot,rows,absSeries,signed
  ticks=Table[{i,Rotate[Style[short[protocols[[i]]],9],Pi/5]},{i,5}];
  meanPlot=ListPlot[MapIndexed[{First[#2],Around[#1["AbsDeltaRhoMean"],#1["AbsDeltaRhoSD"]]}&,s],Frame->True,
   FrameLabel->{"Protocol","Mean |Delta rho|"},FrameTicks->{{Automatic,None},{ticks,None}},ImagePadding->{{60,20},{85,25}},
-  GridLines->{None,Automatic},GridLinesStyle->Directive[GrayLevel[.65],Opacity[.32],AbsoluteThickness[.6]],Method->{"GridLinesInFront"->False},
+  GridLines->None,
   PlotMarkers->{Automatic,10},PlotRange->All,ImageSize->540,PlotLabel->fam<>" five-protocol anchor (mean +/- SD)"];
  rows=Select[anchorRows,#Family===fam&];
  absSeries=Table[Lookup[SortBy[Select[rows,#Seed===seed&],First@FirstPosition[protocols,#Protocol]&],"AbsDeltaRho"],{seed,Range[10]}];
  signedSeries=Table[Lookup[SortBy[Select[rows,#Seed===seed&],First@FirstPosition[protocols,#Protocol]&],"DeltaRho"],{seed,Range[10]}];
  seedPlotAbs=ListLinePlot[absSeries,Frame->True,FrameLabel->{"Protocol","|Delta rho|"},FrameTicks->{{Automatic,None},{ticks,None}},ImagePadding->{{60,100},{85,25}},
-  GridLines->{None,Automatic},GridLinesStyle->Directive[GrayLevel[.65],Opacity[.32],AbsoluteThickness[.6]],Method->{"GridLinesInFront"->False},
+  GridLines->None,
   PlotLegends->("Seed "<>ToString[#]&/@Range[10]),PlotMarkers->Automatic,PlotRange->All,ImageSize->600,PlotLabel->fam<>" paired absolute gaps"];
  seedPlotSigned=ListLinePlot[signedSeries,Frame->True,FrameLabel->{"Protocol","Signed Delta rho"},FrameTicks->{{Automatic,None},{ticks,None}},ImagePadding->{{60,100},{85,25}},
-  GridLines->{None,Automatic},GridLinesStyle->Directive[GrayLevel[.65],Opacity[.32],AbsoluteThickness[.6]],Method->{"GridLinesInFront"->False},
+  GridLines->None,
   PlotLegends->("Seed "<>ToString[#]&/@Range[10]),PlotMarkers->Automatic,PlotRange->All,ImageSize->600,PlotLabel->fam<>" paired signed gaps"];
  plots=Thread[{{"_anchor_mean_abs_gap","_anchor_paired_abs_gap","_anchor_paired_signed_gap"},{meanPlot,seedPlotAbs,seedPlotSigned}}];
  Do[If[ext===".png",Export[FileNameJoin[{figDir,ToLowerCase[fam]<>pair[[1]]<>ext}],pair[[2]],ImageResolution->180],
