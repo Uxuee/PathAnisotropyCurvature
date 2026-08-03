@@ -2,3 +2,15 @@ output/pdf/*.aux
 output/pdf/*.log
 output/pdf/*.out
 tmp/
+__pycache__/
+*.py[cod]
+*.aux
+*.log
+*.out
+*.synctex.gz
+*~
+*.bak
+*.swp
+.DS_Store
+Thumbs.db
+/*.zip

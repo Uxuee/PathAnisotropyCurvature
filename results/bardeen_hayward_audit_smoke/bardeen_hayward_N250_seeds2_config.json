@@ -36,5 +36,5 @@
 		"Bardeen":0.2,
 		"Hayward":0.2
 	},
-	"OutputDirectory":"C:\\Users\\palom\\Documents\\graphs\\results\\bardeen_hayward_audit_smoke"
+	"OutputDirectory":"results\\bardeen_hayward_audit_smoke"
 }

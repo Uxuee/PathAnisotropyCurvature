@@ -17,6 +17,6 @@ The manuscript uses standard `article.cls` and the packages `geometry`,
 `amsmath`, `amssymb`, `graphicx`, `booktabs`, `array`, `float`, `hyperref`,
 `xcolor`, `microtype`, and `caption`.
 
-Before submission, the author must replace the two explicitly marked temporary
-lines for funding information and the Zenodo DOI. The package has not been
-submitted through ScholarOne.
+Before submission, the author must provide funding information and insert the
+Zenodo DOI after the archive is created. The package has not been submitted
+through ScholarOne.

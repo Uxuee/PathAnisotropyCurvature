@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software or its accompanying data, please cite the archived
+  release.
+title: >-
+  Construction Sensitivity of a Shortest-Path Anisotropy Diagnostic in
+  Geometric Graphs from Black-Hole Embeddings
+type: software
+authors:
+  - family-names: Palomino Ylla
+    given-names: Ariadna Uxue
+    affiliation: Nagoya University
+    # orcid: ORCID_REQUIRED_FROM_AUTHOR
+repository-code: https://github.com/Uxuee/PathAnisotropyCurvature
+license: MIT
+version: 1.0.0
+preferred-citation:
+  type: article
+  title: >-
+    Construction Sensitivity of a Shortest-Path Anisotropy Diagnostic in
+    Geometric Graphs from Black-Hole Embeddings
+  authors:
+    - family-names: Palomino Ylla
+      given-names: Ariadna Uxue
+      affiliation: Nagoya University
+  year: 2026
+  identifiers:
+    - type: other
+      value: arXiv:2606.27248
+      description: Related earlier preprint version; not the DOI of this release

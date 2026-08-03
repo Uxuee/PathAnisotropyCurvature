@@ -37,7 +37,7 @@
 		"ZeroRowsPresent":true,
 		"CoordinateAndCommonProfileHashesAgree":true,
 		"FamilyZeroLimitsAgreeRowByRow":true,
-		"SchwarzschildReferencePath":"C:\\Users\\palom\\Documents\\graphs\\results\\construction_audit_smoke\\schwarzschild_five_protocols_N250_seeds2_raw.csv",
+		"SchwarzschildReferencePath":"results\\construction_audit_smoke\\schwarzschild_five_protocols_N250_seeds2_raw.csv",
 		"SchwarzschildRowsAgreeRowByRow":true,
 		"MaximumZeroLimitDifference":0.0,
 		"Tolerance":1.0e-12
