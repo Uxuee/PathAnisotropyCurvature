@@ -1,0 +1,21 @@
+{
+	"RowCount":50,
+	"ExpectedRowCount":50,
+	"AllProtocolsPresentPerSeed":true,
+	"ProtocolCountsCorrect":true,
+	"SeedCountsCorrect":true,
+	"AllCommonBinsRequested":true,
+	"AllCorrelationsNumericOrJustifiedMissing":true,
+	"MissingCorrelationCount":0,
+	"MutualSubsetChecksPassed":true,
+	"MaxXYMismatch":1.3322676295501878e-15,
+	"AllXYWithinTolerance":true,
+	"ConnectivityFieldsPresent":true,
+	"ValidFractionFieldsPresent":true,
+	"EdgeMatchesExactOrTieExplained":true,
+	"CheckpointCount":10,
+	"AllProtocolSummariesHaveTenSeeds":true,
+	"RawCSVHeaderExplicit":true,
+	"SummaryCSVHeaderExplicit":true,
+	"QualityControlCSVHeaderExplicit":true
+}

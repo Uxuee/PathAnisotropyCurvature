@@ -172,7 +172,8 @@ runFull[] := Module[{cfg = finalConfig[], runs},
   ];
 
 runAggregate[] := Module[{cfg = finalConfig[], runs, path, seedRun, rows, qc,
-   validation, audit, exported},
+   validation, audit, exported, summary, rawHeader, summaryHeader, qcHeader,
+   runtimeRows, runtimeReport, runtimeStem},
   runs = Table[
     path = seedCheckpointPath[cfg, seed];
     seedRun = loadCheckpoint[path, seed, cfg];
@@ -186,6 +187,38 @@ runAggregate[] := Module[{cfg = finalConfig[], runs, path, seedRun, rows, qc,
   audit = <|"Config" -> cfg, "Rows" -> rows, "QualityControl" -> qc|>;
   exported = exportAudit[audit, "schwarzschild_five_protocols_N1000_seeds10"];
   require[AssociationQ[exported], "Final export failed."];
+  summary = exported["Summary"];
+  require[Length[summary] === 5 && AllTrue[Lookup[summary, "NSeeds"], # === 10 &],
+   "Every protocol summary must contain NSeeds = 10."];
+  rawHeader = First @ Import[exported["Paths"]["RawCSV"], "CSV"];
+  summaryHeader = First @ Import[exported["Paths"]["SummaryCSV"], "CSV"];
+  qcHeader = First @ Import[exported["Paths"]["QualityControlCSV"], "CSV"];
+  require[rawHeader === Keys[First[rows]], "Raw CSV header is not explicit or stable."];
+  require[summaryHeader === Keys[First[summary]], "Summary CSV header is not explicit or stable."];
+  require[qcHeader === Keys[First[qc]], "Quality-control CSV header is not explicit or stable."];
+  runtimeRows = Table[
+    <|"Seed" -> run["Seed"], "ElapsedSeconds" -> run["ElapsedSeconds"]|>,
+    {run, runs}];
+  runtimeReport = <|
+    "N" -> cfg["N"], "Seeds" -> Range[10],
+    "PerSeedSeconds" -> AssociationThread[ToString /@ Lookup[runtimeRows, "Seed"],
+      Lookup[runtimeRows, "ElapsedSeconds"]],
+    "TotalSeedComputeSeconds" -> Total[Lookup[runtimeRows, "ElapsedSeconds"]],
+    "MeanSeedSeconds" -> Mean[Lookup[runtimeRows, "ElapsedSeconds"]],
+    "MinSeedSeconds" -> Min[Lookup[runtimeRows, "ElapsedSeconds"]],
+    "MaxSeedSeconds" -> Max[Lookup[runtimeRows, "ElapsedSeconds"]]
+    |>;
+  runtimeStem = FileNameJoin[{cfg["OutputDirectory"],
+     "schwarzschild_five_protocols_N1000_seeds10_runtime"}];
+  PathAnisotropyCurvature`exportDatasetCSV[runtimeStem <> ".csv", runtimeRows];
+  Export[runtimeStem <> ".json", runtimeReport, "RawJSON"];
+  validation = Join[validation, <|
+     "CheckpointCount" -> Length[runs],
+     "AllProtocolSummariesHaveTenSeeds" -> True,
+     "RawCSVHeaderExplicit" -> True,
+     "SummaryCSVHeaderExplicit" -> True,
+     "QualityControlCSVHeaderExplicit" -> True
+     |>];
   writeValidation[FileNameJoin[{cfg["OutputDirectory"],
      "schwarzschild_five_protocols_N1000_seeds10_validation.json"}], validation];
   Print["Final aggregation passed with 50 rows."];
