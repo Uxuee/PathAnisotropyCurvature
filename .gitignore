@@ -1,16 +1,4 @@
-# Mathematica
-*.mx
-*.nb~
-*.bak
-*.tmp
-
-# Results
-results/**/*.pdf
-results/**/*.png
-results/**/*.csv
-
-# OS/editor
-.DS_Store
-Thumbs.db
-.vscode/
-.idea/
+output/pdf/*.aux
+output/pdf/*.log
+output/pdf/*.out
+tmp/

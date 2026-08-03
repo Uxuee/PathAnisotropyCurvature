@@ -1,0 +1,10 @@
+Construction-sensitivity multi-seed rerun
+
+For the Schwarzschild/Flamm benchmark, each diagnostic--construction--control protocol was repeated over 2 paired random seeds. The curved and matched-flat graphs shared the same radial and angular sample within each seed. For every run, C_log was radially binned using the common-bin comparison pipeline, and we computed Delta rho_r = rho_r(C_log)_BH - rho_r(C_log)_flat. The reported separation is |Delta rho_r|, summarized as mean +/- standard deviation across seeds.
+
+Protocol summary:
+Original matched-flat KNN: 0.624 +/- 0.591 (n=2)
+Strict radius: 0.363 +/- 0.127 (n=2)
+Pure KNN: 0.376 +/- 0.145 (n=2)
+Mutual KNN: 0.255 +/- 0.229 (n=2)
+Edge-matched radius: 0.438 +/- 0.161 (n=2)

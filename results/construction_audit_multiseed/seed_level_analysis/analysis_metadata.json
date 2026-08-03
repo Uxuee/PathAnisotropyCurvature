@@ -1,0 +1,14 @@
+{
+	"Source":"results\\construction_audit_multiseed\\schwarzschild_five_protocols_N1000_seeds10_raw.csv",
+	"NPairedSeeds":10,
+	"Protocols":[
+		"Original matched-flat KNN",
+		"Strict radius",
+		"Pure KNN",
+		"Mutual KNN",
+		"Edge-matched radius"
+	],
+	"Interval":"Two-sided 95% Student-t interval for the mean paired difference, df=9",
+	"IQRConvention":"Wolfram Quantile defaults; flag outside [Q1-1.5 IQR, Q3+1.5 IQR]",
+	"Caution":"Marginal confidence-interval overlap is not a paired significance test."
+}

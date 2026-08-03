@@ -1,0 +1,14 @@
+Notebook[{
+Cell["Construction-Sensitivity Multi-Seed Audit", "Title"],
+Cell["This runner notebook loads the audited Wolfram source file in the same directory. First run the loader cell, then the smoke test. Only after the smoke test succeeds should you run the final N=1000, ten-seed audit.", "Text"],
+Cell[BoxData[RowBox[{"ToExpression","[","\"Get[FileNameJoin[{NotebookDirectory[], \"ConstructionSensitivityMultiSeedAudit.wl\"}]]\"","]"}]], "Input", InitializationCell->True],
+Cell["Quick smoke test (N=250, two seeds)", "Section"],
+Cell[BoxData[RowBox[{"ToExpression","[","\"quickConfig = Join[defaultConfig, <|\"N\" -> 250, \"Seeds\" -> {1, 2}, \"MinimumCommonBins\" -> 3, \"OutputDirectory\" -> FileNameJoin[{repoRoot, \"results\", \"construction_audit_smoke\"}]|>]; quickAudit = runAudit[quickConfig]; quickSummary = summarizeAudit[quickAudit[\"Rows\"]]; Dataset[quickSummary]\"","]"}]], "Input"],
+Cell["Resumable final paper rerun", "Section"],
+Cell["Run the final calculation headlessly from the repository root so each seed is checkpointed immediately: wolframscript -file .\\scripts\\run_construction_audit.wls full. After all ten seeds finish, run the same command with aggregate. See CONSTRUCTION_AUDIT_RUNBOOK.md.", "Text"],
+Cell["The complete implementation and comments are in ConstructionSensitivityMultiSeedAudit.wl. Open that file in Wolfram Desktop to inspect or edit its notebook-style sections.", "Text"]
+},
+WindowSize->{1100, 800},
+WindowMargins->{{Automatic, 40}, {Automatic, 40}},
+StyleDefinitions->"Default.nb"
+]

@@ -1,0 +1,11 @@
+"Protocol","XYMismatch","BHEdges","FlatEdges","BHComponents","FlatComponents","BHLargestComponentFraction","FlatLargestComponentFraction","Seed"
+"Original matched-flat KNN",1.3322676295501878e-15,2548,2306,1,1,1,1,1
+"Strict radius",1.3322676295501878e-15,2548,2496,1,1,1,1,1
+"Pure KNN",0,2291,2306,1,1,1,1,1
+"Mutual KNN",0,1709,1694,1,1,1,1,1
+"Edge-matched radius",0,2548,2548,1,1,1,1,1
+"Original matched-flat KNN",1.7763568394002505e-15,2532,2320,1,1,1,1,2
+"Strict radius",1.7763568394002505e-15,2532,2524,1,1,1,1,2
+"Pure KNN",0,2326,2320,1,1,1,1,2
+"Mutual KNN",0,1674,1680,1,1,1,1,2
+"Edge-matched radius",0,2532,2532,1,1,1,1,2

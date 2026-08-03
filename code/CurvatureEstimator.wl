@@ -500,7 +500,7 @@ buildBardeenDataset[n_Integer?Positive, M_: 1/2, gpar_: 0.2, k_: 16] :=
 buildHaywardDataset[n_Integer?Positive, M_: 1/2, ell_: 0.2, k_: 16] :=
  buildStaticSphericalFromFlammSampling[n, M, haywardF[M, ell], metricKretschmannFunctionFromF[haywardF[M, ell]], k, "Hayward_l" <> ToString[ell]];
 
-buildBlackHoleFigureDatasets[n_Integer?Positive: 1000, M_: 1/2, k_: 16, Q_: 0.4, gpar_: 0.2, ell_: 0.2] :=
+buildBlackHoleFigureDatasets[Optional[n_Integer?Positive, 1000], M_: 1/2, k_: 16, Q_: 0.4, gpar_: 0.2, ell_: 0.2] :=
  Module[{base},
   base = buildFlammDataset[n, M, k];
   <|
@@ -958,7 +958,7 @@ rowsWithRAndEstimator[data_, res_, estimator_: "LogCMD"] :=
   rows
  ];
 
-commonRadialBinnedComparison[data1_, res1_, data2_, res2_, estimator_: "LogCMD", nbins_Integer?Positive: 12] :=
+commonRadialBinnedComparison[data1_, res1_, data2_, res2_, estimator_: "LogCMD", Optional[nbins_Integer?Positive, 12]] :=
  Module[{rows1, rows2, rmin, rmax, assignBin, addBins, grouped1, grouped2, commonBins},
   rows1 = rowsWithRAndEstimator[data1, res1, estimator];
   rows2 = rowsWithRAndEstimator[data2, res2, estimator];
@@ -1187,9 +1187,16 @@ ClearAll[ensureDirectory, exportDatasetCSV];
 ensureDirectory[path_String] := If[! DirectoryQ[path], CreateDirectory[path, CreateIntermediateDirectories -> True]];
 
 exportDatasetCSV[path_String, data_] :=
- Module[{dir = DirectoryName[path], rows = Normal[data]},
+ Module[{dir = DirectoryName[path], rows, keys, table},
+  rows = If[Head[data] === Dataset, Normal[data], data];
   If[StringQ[dir] && dir =!= "", ensureDirectory[dir]];
-  Export[path, rows]
+  If[! ListQ[rows] || rows === {} || ! AllTrue[rows, AssociationQ],
+   Return[$Failed]
+  ];
+  keys = Keys[First[rows]];
+  If[! AllTrue[rows, Sort[Keys[#]] === Sort[keys] &], Return[$Failed]];
+  table = Prepend[Lookup[#, keys] & /@ rows, keys];
+  Export[path, table, "CSV"]
  ];
 
 End[];
