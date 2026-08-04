@@ -17,6 +17,5 @@ The manuscript uses standard `article.cls` and the packages `geometry`,
 `amsmath`, `amssymb`, `graphicx`, `booktabs`, `array`, `float`, `hyperref`,
 `xcolor`, `microtype`, and `caption`.
 
-Before submission, insert the Zenodo DOI after the archive is created. The
-package has not been submitted
-through ScholarOne.
+The archived code and data DOI is `10.5281/zenodo.21782190`. The package has
+not been submitted through ScholarOne.

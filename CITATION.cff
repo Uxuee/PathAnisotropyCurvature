@@ -13,7 +13,8 @@ authors:
     # orcid: ORCID_REQUIRED_FROM_AUTHOR
 repository-code: https://github.com/Uxuee/PathAnisotropyCurvature
 license: MIT
-version: 1.0.0
+version: 1.0.1
+doi: 10.5281/zenodo.21782190
 preferred-citation:
   type: article
   title: >-

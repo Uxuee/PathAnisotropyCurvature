@@ -118,8 +118,8 @@ The archived validation records confirm:
 
 Citation metadata are provided in [`CITATION.cff`](CITATION.cff). GitHub's
 **Cite this repository** control can render the recommended software citation.
-The archival DOI must be added after Zenodo creates it; no DOI is fabricated in
-this repository.
+Release v1.0.1 is archived in Zenodo at
+[doi:10.5281/zenodo.21782190](https://doi.org/10.5281/zenodo.21782190).
 
 This project is licensed under the [MIT License](LICENSE).
 
@@ -130,4 +130,5 @@ single-realization results. Release v1.0.0 replaces that construction analysis
 with paired ten-seed audits, adds canonical Bardeen and Hayward calculations,
 and removes quantitative claims that did not survive multi-seed validation.
 The arXiv identifier denotes the related earlier manuscript version, not the
-DOI of this software/data release.
+DOI of the v1.0.1 software/data release, which is
+[10.5281/zenodo.21782190](https://doi.org/10.5281/zenodo.21782190).
